@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Paper Plate Manager</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #dbeafe;
+            --success: #16a34a;
+            --success-light: #dcfce7;
+            --danger: #dc2626;
+            --danger-light: #fee2e2;
+            --warning: #d97706;
+            --warning-light: #fef3c7;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --bg: #eff6ff;
+            --card: #ffffff;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --radius: 14px;
+            --radius-sm: 9px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--gray-900);
+            min-height: 100vh;
+            padding-bottom: 72px;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            color: white;
+            padding: 16px 18px 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-md);
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+        .header-date { font-size: 12px; opacity: 0.8; background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 20px; }
+
+        /* BOTTOM NAV */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: white; display: flex;
+            border-top: 1px solid var(--gray-200);
+            z-index: 100; box-shadow: 0 -2px 12px rgba(0,0,0,0.07);
+        }
+        .nav-item {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 8px 4px; cursor: pointer; border: none;
+            background: none; font-size: 10px; color: var(--gray-500);
+            transition: color 0.15s; gap: 3px; font-weight: 500;
+        }
+        .nav-item.active { color: var(--primary); }
+        .nav-item .nav-icon { font-size: 19px; line-height: 1; }
+        .nav-item.active .nav-label { color: var(--primary); }
+
+        /* PAGES */
+        .page { display: none; padding: 14px; }
+        .page.active { display: block; }
+
+        /* CARDS */
+        .card { background: var(--card); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); margin-bottom: 12px; }
+
+        /* STATS GRID */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .stat-card { background: var(--card); border-radius: var(--radius); padding: 14px 12px; box-shadow: var(--shadow); text-align: center; }
+        .stat-label { font-size: 10px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; }
+        .stat-value { font-size: 22px; font-weight: 800; color: var(--primary); margin-top: 3px; line-height: 1; }
+        .stat-sub { font-size: 11px; color: var(--gray-500); margin-top: 3px; }
+
+        /* SECTION HEADER */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .section-header h2 { font-size: 16px; font-weight: 700; }
+
+        /* BUTTONS */
+        .btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 9px 16px; border-radius: var(--radius-sm);
+            border: none; cursor: pointer; font-size: 13px;
+            font-weight: 600; transition: all 0.15s; font-family: inherit;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:active { background: var(--primary-dark); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-outline { background: transparent; border: 1.5px solid var(--primary); color: var(--primary); }
+        .btn-full { width: 100%; justify-content: center; }
+        .btn-icon { background: var(--gray-100); border: none; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; }
+
+        /* CUSTOMER CARDS */
+        .item-card {
+            background: white; border-radius: var(--radius); padding: 13px;
+            box-shadow: var(--shadow); margin-bottom: 10px; cursor: pointer;
+            border-left: 3px solid transparent; transition: border-color 0.15s;
+        }
+        .item-card:active { border-left-color: var(--primary); }
+        .item-card .item-name { font-weight: 700; font-size: 15px; }
+        .item-card .item-sub { font-size: 12px; color: var(--gray-500); margin-top: 3px; }
+        .item-card .badge-row { margin-top: 7px; display: flex; gap: 6px; flex-wrap: wrap; }
+
+        /* SALE CARD */
+        .sale-card { background: white; border-radius: var(--radius); padding: 13px; box-shadow: var(--shadow); margin-bottom: 10px; cursor: pointer; }
+        .sale-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .sale-name { font-weight: 700; font-size: 14px; }
+        .sale-meta { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+        .sale-row { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+        .sale-detail { font-size: 12px; color: var(--gray-700); }
+        .sale-detail b { font-weight: 700; }
+        .sale-amount { font-size: 17px; font-weight: 800; margin-top: 7px; }
+
+        /* STOCK CARD */
+        .stock-card { background: white; border-radius: var(--radius); padding: 13px; box-shadow: var(--shadow); margin-bottom: 10px; }
+        .stock-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .stock-num-label { font-size: 18px; font-weight: 800; color: var(--primary); }
+        .stock-src { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+        .stock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+        .stock-stat { background: var(--gray-50); border-radius: 8px; padding: 8px 10px; }
+        .stock-stat .slabel { font-size: 10px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.4px; }
+        .stock-stat .sval { font-size: 14px; font-weight: 700; margin-top: 2px; }
+
+        /* BADGE */
+        .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+        .badge-paid { background: var(--success-light); color: var(--success); }
+        .badge-pending { background: var(--danger-light); color: var(--danger); }
+        .badge-partial { background: var(--warning-light); color: var(--warning); }
+        .badge-blue { background: var(--primary-light); color: var(--primary); }
+
+        /* FILTER BAR */
+        .filter-bar { display: flex; gap: 7px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 3px; }
+        .filter-bar::-webkit-scrollbar { display: none; }
+        .chip {
+            flex-shrink: 0; padding: 5px 13px; border-radius: 20px;
+            border: 1.5px solid var(--gray-200); background: white;
+            font-size: 12px; cursor: pointer; font-weight: 500; color: var(--gray-700);
+        }
+        .chip.active { background: var(--primary); border-color: var(--primary); color: white; }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45); z-index: 200; align-items: flex-end;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: white; border-radius: 20px 20px 0 0;
+            width: 100%; max-height: 92vh; overflow-y: auto;
+            padding: 0 18px 24px; animation: slideUp 0.25s ease;
+        }
+        .modal-handle { width: 36px; height: 4px; background: var(--gray-200); border-radius: 2px; margin: 10px auto 14px; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+        .modal-header h3 { font-size: 17px; font-weight: 700; }
+        .modal-close { background: var(--gray-100); border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+
+        /* FORM */
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--gray-700); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 11px 12px; border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm); font-size: 14px; outline: none;
+            transition: border-color 0.15s; font-family: inherit; background: white; color: var(--gray-900);
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); }
+        .form-group input[readonly] { background: var(--gray-50); color: var(--gray-700); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        /* DETAIL VIEW */
+        .detail-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--gray-100); font-size: 13px; }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-row .dlabel { color: var(--gray-500); flex-shrink: 0; }
+        .detail-row .dval { font-weight: 600; text-align: right; margin-left: 10px; }
+
+        /* EMPTY STATE */
+        .empty { text-align: center; padding: 40px 20px; color: var(--gray-500); }
+        .empty .eicon { font-size: 38px; margin-bottom: 10px; }
+        .empty p { font-size: 13px; line-height: 1.5; }
+
+        /* TOAST */
+        .toast {
+            position: fixed; bottom: 82px; left: 50%; transform: translateX(-50%);
+            background: var(--gray-900); color: white; padding: 9px 18px;
+            border-radius: 20px; font-size: 13px; z-index: 400;
+            opacity: 0; transition: opacity 0.25s; white-space: nowrap; pointer-events: none;
+        }
+        .toast.show { opacity: 1; }
+
+        /* CONFIRM */
+        .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
+        .confirm-overlay.open { display: flex; }
+        .confirm-box { background: white; border-radius: var(--radius); padding: 22px; width: 100%; max-width: 300px; text-align: center; }
+        .confirm-box h4 { font-size: 16px; margin-bottom: 6px; }
+        .confirm-box p { font-size: 13px; color: var(--gray-500); margin-bottom: 18px; }
+        .confirm-btns { display: flex; gap: 10px; }
+
+        /* REPORT */
+        .report-card { background: white; border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); margin-bottom: 12px; }
+        .report-card h3 { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 10px; }
+        .report-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--gray-100); }
+        .report-row:last-child { border-bottom: none; font-weight: 700; }
+        .report-row .rv { font-weight: 600; }
+
+        /* ACTION ROW */
+        .action-row { display: flex; gap: 8px; margin-top: 14px; }
+
+        /* DIVIDER */
+        .divider { height: 1px; background: var(--gray-100); margin: 12px 0; }
+
+        @media (min-width: 560px) {
+            body { max-width: 560px; margin: 0 auto; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="header-top">
+        <h1>Paper Plate Manager</h1>
+        <span class="header-date" id="header-date">Loading...</span>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- PAGE: DASHBOARD -->
+<div class="page active" id="page-dashboard">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Today Bundles</div>
+            <div class="stat-value" id="dash-today-bundles">0</div>
+            <div class="stat-sub" id="dash-today-amount">&#8377;0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Month Bundles</div>
+            <div class="stat-value" id="dash-month-bundles">0</div>
+            <div class="stat-sub" id="dash-month-amount">&#8377;0 revenue</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Pending Amount</div>
+            <div class="stat-value" id="dash-pending" style="color:var(--danger);font-size:17px;">&#8377;0</div>
+            <div class="stat-sub" id="dash-pending-count">0 sales</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Total Customers</div>
+            <div class="stat-value" id="dash-customers">0</div>
+            <div class="stat-sub">registered</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-header" style="margin-bottom:8px">
+            <h2>Current Stock</h2>
+        </div>
+        <div id="dash-stock">
+            <div style="color:var(--gray-500);font-size:13px;">No stock added yet</div>
+        </div>
+    </div>
+
+    <div class="section-header">
+        <h2>Recent Sales</h2>
+        <button class="btn btn-primary btn-sm" onclick="openAddSale()">+ Add Sale</button>
+    </div>
+    <div id="dash-recent-sales">
+        <div class="empty"><p>No sales yet</p></div>
+    </div>
+</div>
+
+<!-- PAGE: CUSTOMERS -->
+<div class="page" id="page-customers">
+    <div class="section-header">
+        <h2>Customers</h2>
+        <button class="btn btn-primary btn-sm" onclick="openAddCustomer()">+ Add</button>
+    </div>
+    <div id="customers-list">
+        <div class="empty"><div class="eicon">&#128101;</div><p>No customers yet</p></div>
+    </div>
+</div>
+
+<!-- PAGE: SALES -->
+<div class="page" id="page-sales">
+    <div class="section-header">
+        <h2>Sales</h2>
+        <button class="btn btn-primary btn-sm" onclick="openAddSale()">+ Add Sale</button>
+    </div>
+    <div class="filter-bar">
+        <button class="chip active" onclick="setFilter('all',this)">All</button>
+        <button class="chip" onclick="setFilter('pending',this)">Pending</button>
+        <button class="chip" onclick="setFilter('paid',this)">Paid</button>
+        <button class="chip" onclick="setFilter('partial',this)">Partial</button>
+        <button class="chip" onclick="setFilter('today',this)">Today</button>
+        <button class="chip" onclick="setFilter('month',this)">This Month</button>
+    </div>
+    <div id="sales-summary" style="margin-bottom:10px;"></div>
+    <div id="sales-list">
+        <div class="empty"><div class="eicon">&#128230;</div><p>No sales yet</p></div>
+    </div>
+</div>
+
+<!-- PAGE: STOCK -->
+<div class="page" id="page-stock">
+    <div class="section-header">
+        <h2>Stock Purchase</h2>
+        <button class="btn btn-primary btn-sm" onclick="openAddStock()">+ Add</button>
+    </div>
+    <div id="stock-list">
+        <div class="empty"><div class="eicon">&#127981;</div><p>No stock records yet</p></div>
+    </div>
+</div>
+
+<!-- PAGE: REPORTS -->
+<div class="page" id="page-reports">
+    <div class="section-header">
+        <h2>Monthly Reports</h2>
+    </div>
+    <div id="reports-content">
+        <div class="empty"><div class="eicon">&#128202;</div><p>No data yet</p></div>
+    </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+    <button class="nav-item active" onclick="showPage('dashboard',this)">
+        <span class="nav-icon">&#127968;</span><span class="nav-label">Home</span>
+    </button>
+    <button class="nav-item" onclick="showPage('customers',this)">
+        <span class="nav-icon">&#128101;</span><span class="nav-label">Customers</span>
+    </button>
+    <button class="nav-item" onclick="showPage('sales',this)">
+        <span class="nav-icon">&#128230;</span><span class="nav-label">Sales</span>
+    </button>
+    <button class="nav-item" onclick="showPage('stock',this)">
+        <span class="nav-icon">&#127981;</span><span class="nav-label">Stock</span>
+    </button>
+    <button class="nav-item" onclick="showPage('reports',this)">
+        <span class="nav-icon">&#128202;</span><span class="nav-label">Reports</span>
+    </button>
+</nav>
+
+<!-- MODAL: ADD/EDIT CUSTOMER -->
+<div class="modal-overlay" id="modal-customer">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <h3 id="customer-modal-title">Add Customer</h3>
+            <button class="modal-close" onclick="closeModal('modal-customer')">&#x2715;</button>
+        </div>
+        <form id="customer-form" onsubmit="saveCustomer(event)">
+            <input type="hidden" id="c-id">
+            <div class="form-group">
+                <label>Customer Name *</label>
+                <input type="text" id="c-name" placeholder="Full name" required>
+            </div>
+            <div class="form-group">
+                <label>Phone Number *</label>
+                <input type="tel" id="c-phone" placeholder="10-digit number" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>City / Location *</label>
+                    <input type="text" id="c-location" placeholder="City or area" required>
+                </div>
+                <div class="form-group">
+                    <label>Rate / Bundle (&#8377;) *</label>
+                    <input type="number" id="c-rate" placeholder="e.g. 850" required min="1">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Full Address</label>
+                <textarea id="c-address" placeholder="Shop name, street, area..." rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Google Maps Link</label>
+                <input type="url" id="c-map" placeholder="Paste maps link here">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="c-notes" placeholder="Any extra info about this customer" rows="2"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" style="margin-top:4px">Save Customer</button>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: VIEW CUSTOMER -->
+<div class="modal-overlay" id="modal-customer-view">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <h3>Customer Details</h3>
+            <button class="modal-close" onclick="closeModal('modal-customer-view')">&#x2715;</button>
+        </div>
+        <div id="customer-view-content"></div>
+    </div>
+</div>
+
+<!-- MODAL: ADD/EDIT SALE -->
+<div class="modal-overlay" id="modal-sale">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <h3 id="sale-modal-title">Add Sale</h3>
+            <button class="modal-close" onclick="closeModal('modal-sale')">&#x2715;</button>
+        </div>
+        <form id="sale-form" onsubmit="saveSale(event)">
+            <input type="hidden" id="s-id">
+            <div class="form-group">
+                <label>Date *</label>
+                <input type="date" id="s-date" required>
+            </div>
+            <div class="form-group">
+                <label>Customer *</label>
+                <select id="s-customer" required onchange="onCustomerChange()">
+                    <option value="">-- Select Customer --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Stock Number</label>
+                <select id="s-stock">
+                    <option value="">-- Select Stock --</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Bundles *</label>
+                    <input type="number" id="s-bundles" placeholder="Count" required min="1" oninput="calcSaleTotal()">
+                </div>
+                <div class="form-group">
+                    <label>Rate / Bundle (&#8377;) *</label>
+                    <input type="number" id="s-rate" placeholder="Rate" required min="1" oninput="calcSaleTotal()">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Total Amount (&#8377;)</label>
+                <input type="number" id="s-total" placeholder="Auto calculated" readonly>
+            </div>
+            <div class="form-group">
+                <label>Payment Status *</label>
+                <select id="s-status" required onchange="onStatusChange()">
+                    <option value="pending">Pending</option>
+                    <option value="paid">Paid</option>
+                    <option value="partial">Partial Payment</option>
+                </select>
+            </div>
+            <div id="payment-fields" style="display:none;">
+                <div class="form-group">
+                    <label>Payment Mode</label>
+                    <select id="s-pay-mode">
+                        <option value="cash">Cash in Hand</option>
+                        <option value="phonepay">Phone Pay</option>
+                        <option value="upi">Other UPI</option>
+                        <option value="bank">Bank Transfer</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Payment Date</label>
+                        <input type="date" id="s-pay-date">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount Paid (&#8377;)</label>
+                        <input type="number" id="s-pay-amount" placeholder="Paid">
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="s-notes" placeholder="Extra notes..." rows="2"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" style="margin-top:4px">Save Sale</button>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: VIEW SALE -->
+<div class="modal-overlay" id="modal-sale-view">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <h3>Sale Details</h3>
+            <button class="modal-close" onclick="closeModal('modal-sale-view')">&#x2715;</button>
+        </div>
+        <div id="sale-view-content"></div>
+    </div>
+</div>
+
+<!-- MODAL: ADD/EDIT STOCK -->
+<div class="modal-overlay" id="modal-stock">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <h3 id="stock-modal-title">Add Stock Purchase</h3>
+            <button class="modal-close" onclick="closeModal('modal-stock')">&#x2715;</button>
+        </div>
+        <form id="stock-form" onsubmit="saveStock(event)">
+            <input type="hidden" id="st-id">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Stock Number *</label>
+                    <input type="number" id="st-num" placeholder="e.g. 9" required min="1">
+                </div>
+                <div class="form-group">
+                    <label>Purchase Date *</label>
+                    <input type="date" id="st-date" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Source Location *</label>
+                <input type="text" id="st-source" placeholder="Where stock came from" required>
+            </div>
+            <div class="form-group">
+                <label>Supplier Name</label>
+                <input type="text" id="st-supplier" placeholder="Supplier name (optional)">
+            </div>
+            <div class="form-group">
+                <label>Total Bundles Received *</label>
+                <input type="number" id="st-bundles" placeholder="Number of bundles" required min="1">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Purchase Cost (&#8377;) *</label>
+                    <input type="number" id="st-purchase" placeholder="Amount paid" required min="0" oninput="calcStockTotal()">
+                </div>
+                <div class="form-group">
+                    <label>Transport Cost (&#8377;)</label>
+                    <input type="number" id="st-transport" placeholder="0" min="0" value="0" oninput="calcStockTotal()">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Total Cost (&#8377;)</label>
+                <input type="number" id="st-total" readonly>
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="st-notes" placeholder="Extra details about this stock" rows="2"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" style="margin-top:4px">Save Stock</button>
+        </form>
+    </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-box">
+        <h4>Are you sure?</h4>
+        <p>This will permanently delete this record.</p>
+        <div class="confirm-btns">
+            <button class="btn btn-outline btn-full" onclick="closeConfirm()">Cancel</button>
+            <button class="btn btn-danger btn-full" onclick="doDelete()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+// ============================================================
+// FIREBASE CONFIG — REPLACE WITH YOUR OWN CONFIG
+// Get this from: Firebase Console > Project Settings > Your Apps
+// ============================================================
+const firebaseConfig = {
+    apiKey: "AIzaSyCDtlkYRdas8mURw3OmQRqBG-M2TQZYs6c",
+    authDomain: "disposable-business-559f2.firebaseapp.com",
+    databaseURL: "https://disposable-business-559f2-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "disposable-business-559f2",
+    storageBucket: "disposable-business-559f2.firebasestorage.app",
+    messagingSenderId: "345880664024",
+    appId: "1:345880664024:web:fa0f173bd03d5ba15bc4ad",
+    measurementId: "G-K6KT7QYFPR"
+};
+// ============================================================
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ── STATE ────────────────────────────────────────────────────
+let customers = [];
+let sales = [];
+let stocks = [];
+let salesFilter = 'all';
+let deleteHandler = null;
+let selectedCustomerId = null;
+let selectedSaleId = null;
+
+// ── INIT ─────────────────────────────────────────────────────
+function init() {
+    const today = new Date();
+    document.getElementById('header-date').textContent = today.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+    document.getElementById('s-date').value = toDateStr(today);
+    document.getElementById('st-date').value = toDateStr(today);
+
+    db.collection('customers').orderBy('name').onSnapshot(snap => {
+        customers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderCustomers();
+        fillCustomerDropdown();
+        renderDashboard();
+    }, err => showToast('DB Error: ' + err.code));
+
+    db.collection('sales').orderBy('date', 'desc').onSnapshot(snap => {
+        sales = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderSales();
+        renderDashboard();
+        renderReports();
+    }, err => showToast('DB Error: ' + err.code));
+
+    db.collection('stocks').orderBy('stockNumber', 'desc').onSnapshot(snap => {
+        stocks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderStocks();
+        fillStockDropdown();
+        renderDashboard();
+    }, err => showToast('DB Error: ' + err.code));
+}
+
+// ── NAVIGATION ───────────────────────────────────────────────
+function showPage(name, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    if (el) el.classList.add('active');
+    if (name === 'reports') renderReports();
+}
+
+// ── TOAST ────────────────────────────────────────────────────
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ── MODAL ────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── CONFIRM ──────────────────────────────────────────────────
+function showConfirm(fn) {
+    deleteHandler = fn;
+    document.getElementById('confirm-overlay').classList.add('open');
+}
+function closeConfirm() {
+    deleteHandler = null;
+    document.getElementById('confirm-overlay').classList.remove('open');
+}
+function doDelete() { if (deleteHandler) deleteHandler(); closeConfirm(); }
+
+// ── UTILS ────────────────────────────────────────────────────
+function toDateStr(d) { return d.toISOString().split('T')[0]; }
+function fmtDate(s) {
+    if (!s) return '—';
+    const [y,m,d] = s.split('-');
+    return d + '/' + m + '/' + y;
+}
+function fmtINR(n) { return '&#8377;' + (n||0).toLocaleString('en-IN'); }
+function todayStr() { return toDateStr(new Date()); }
+function monthStr() {
+    const n = new Date();
+    return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0');
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────
+function renderDashboard() {
+    const today = todayStr();
+    const month = monthStr();
+
+    const todaySales = sales.filter(s => s.date === today);
+    const monthSales = sales.filter(s => s.date && s.date.startsWith(month));
+
+    const todayBundles = todaySales.reduce((a,s) => a+(s.bundles||0), 0);
+    const todayAmt = todaySales.reduce((a,s) => a+(s.total||0), 0);
+    const monthBundles = monthSales.reduce((a,s) => a+(s.bundles||0), 0);
+    const monthRevenue = monthSales.filter(s=>s.status==='paid').reduce((a,s)=>a+(s.total||0),0);
+
+    const pendingSales = sales.filter(s => s.status === 'pending' || s.status === 'partial');
+    const pendingAmt = pendingSales.reduce((a,s) => {
+        if (s.status==='partial') return a + Math.max(0,(s.total||0)-(s.amountPaid||0));
+        return a + (s.total||0);
+    }, 0);
+
+    document.getElementById('dash-today-bundles').textContent = todayBundles;
+    document.getElementById('dash-today-amount').innerHTML = fmtINR(todayAmt);
+    document.getElementById('dash-month-bundles').textContent = monthBundles;
+    document.getElementById('dash-month-amount').innerHTML = fmtINR(monthRevenue) + ' collected';
+    document.getElementById('dash-pending').innerHTML = fmtINR(pendingAmt);
+    document.getElementById('dash-pending-count').textContent = pendingSales.length + ' sales';
+    document.getElementById('dash-customers').textContent = customers.length;
+
+    // Current stock
+    const stockEl = document.getElementById('dash-stock');
+    if (stocks.length > 0) {
+        const s = stocks[0];
+        const soldBundles = sales.filter(x=>x.stockNumber==s.stockNumber).reduce((a,x)=>a+(x.bundles||0),0);
+        const remaining = (s.bundles||0) - soldBundles;
+        stockEl.innerHTML = `
+            <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+                <div><div style="font-size:11px;color:var(--gray-500)">Current</div><div style="font-size:20px;font-weight:800;color:var(--primary)">Stock ${s.stockNumber}</div></div>
+                <div><div style="font-size:11px;color:var(--gray-500)">Total</div><div style="font-size:16px;font-weight:700">${s.bundles} bundles</div></div>
+                <div><div style="font-size:11px;color:var(--gray-500)">Sold</div><div style="font-size:16px;font-weight:700;color:var(--warning)">${soldBundles}</div></div>
+                <div><div style="font-size:11px;color:var(--gray-500)">Left</div><div style="font-size:16px;font-weight:700;color:${remaining<0?'var(--danger)':'var(--success)'}">${remaining}</div></div>
+                <div><div style="font-size:11px;color:var(--gray-500)">Source</div><div style="font-size:13px;font-weight:600">${s.source}</div></div>
+            </div>`;
+    } else {
+        stockEl.innerHTML = '<div style="color:var(--gray-500);font-size:13px;">No stock added yet. Go to Stock tab to add.</div>';
+    }
+
+    // Recent sales
+    const recentEl = document.getElementById('dash-recent-sales');
+    const recent = sales.slice(0, 5);
+    if (recent.length === 0) {
+        recentEl.innerHTML = '<div class="empty"><p>No sales yet. Tap + Add Sale to begin.</p></div>';
+    } else {
+        recentEl.innerHTML = recent.map(s => buildSaleCard(s)).join('');
+    }
+}
+
+// ── CUSTOMERS ────────────────────────────────────────────────
+function renderCustomers() {
+    const el = document.getElementById('customers-list');
+    if (!el) return;
+    if (customers.length === 0) {
+        el.innerHTML = '<div class="empty"><div class="eicon">&#128101;</div><p>No customers yet.<br>Tap + Add to get started.</p></div>';
+        return;
+    }
+    el.innerHTML = customers.map(c => `
+        <div class="item-card" onclick="viewCustomer('${c.id}')">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div class="item-name">${esc(c.name)}</div>
+                <span class="badge badge-blue">&#8377;${c.rate}/bundle</span>
+            </div>
+            <div class="item-sub">&#128222; ${esc(c.phone)} &nbsp;&#183;&nbsp; &#128205; ${esc(c.location)}</div>
+            ${c.address ? `<div class="item-sub" style="margin-top:2px">${esc(c.address)}</div>` : ''}
+        </div>
+    `).join('');
+}
+
+function fillCustomerDropdown() {
+    const sel = document.getElementById('s-customer');
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">-- Select Customer --</option>' +
+        customers.map(c => `<option value="${c.id}" data-rate="${c.rate}" data-loc="${esc(c.location)}" data-name="${esc(c.name)}">${esc(c.name)} — ${esc(c.location)}</option>`).join('');
+    sel.value = cur;
+}
+
+function openAddCustomer(c = null) {
+    document.getElementById('customer-modal-title').textContent = c ? 'Edit Customer' : 'Add Customer';
+    document.getElementById('c-id').value = c?.id || '';
+    document.getElementById('c-name').value = c?.name || '';
+    document.getElementById('c-phone').value = c?.phone || '';
+    document.getElementById('c-location').value = c?.location || '';
+    document.getElementById('c-rate').value = c?.rate || '';
+    document.getElementById('c-address').value = c?.address || '';
+    document.getElementById('c-map').value = c?.mapLink || '';
+    document.getElementById('c-notes').value = c?.notes || '';
+    openModal('modal-customer');
+}
+
+async function saveCustomer(e) {
+    e.preventDefault();
+    const data = {
+        name: document.getElementById('c-name').value.trim(),
+        phone: document.getElementById('c-phone').value.trim(),
+        location: document.getElementById('c-location').value.trim(),
+        rate: parseFloat(document.getElementById('c-rate').value),
+        address: document.getElementById('c-address').value.trim(),
+        mapLink: document.getElementById('c-map').value.trim(),
+        notes: document.getElementById('c-notes').value.trim(),
+        updatedAt: new Date().toISOString()
+    };
+    try {
+        const id = document.getElementById('c-id').value;
+        if (id) {
+            await db.collection('customers').doc(id).update(data);
+            showToast('Customer updated!');
+        } else {
+            data.createdAt = new Date().toISOString();
+            await db.collection('customers').add(data);
+            showToast('Customer added!');
+        }
+        closeModal('modal-customer');
+    } catch(err) { showToast('Error: ' + err.message); }
+}
+
+function viewCustomer(id) {
+    selectedCustomerId = id;
+    const c = customers.find(x => x.id === id);
+    if (!c) return;
+
+    const cSales = sales.filter(s => s.customerId === id);
+    const totalBundles = cSales.reduce((a,s)=>a+(s.bundles||0),0);
+    const totalRevenue = cSales.filter(s=>s.status==='paid').reduce((a,s)=>a+(s.total||0),0);
+    const pendingAmt = cSales.filter(s=>s.status==='pending'||s.status==='partial').reduce((a,s)=>{
+        if(s.status==='partial') return a+Math.max(0,(s.total||0)-(s.amountPaid||0));
+        return a+(s.total||0);
+    },0);
+
+    document.getElementById('customer-view-content').innerHTML = `
+        <div style="margin-bottom:14px">
+            <div style="font-size:20px;font-weight:800">${esc(c.name)}</div>
+            <div style="color:var(--gray-500);font-size:13px;margin-top:3px">&#128205; ${esc(c.location)}</div>
+        </div>
+        <div class="card" style="margin-bottom:12px">
+            <div class="detail-row"><span class="dlabel">Phone</span><span class="dval"><a href="tel:${c.phone}" style="color:var(--primary)">${esc(c.phone)}</a></span></div>
+            <div class="detail-row"><span class="dlabel">Rate / Bundle</span><span class="dval">&#8377;${c.rate}</span></div>
+            ${c.address ? `<div class="detail-row"><span class="dlabel">Address</span><span class="dval" style="max-width:60%;word-break:break-word">${esc(c.address)}</span></div>` : ''}
+            ${c.mapLink ? `<div class="detail-row"><span class="dlabel">Maps</span><span class="dval"><a href="${c.mapLink}" target="_blank" style="color:var(--primary)">Open Maps &#8599;</a></span></div>` : ''}
+            ${c.notes ? `<div class="detail-row"><span class="dlabel">Notes</span><span class="dval">${esc(c.notes)}</span></div>` : ''}
+        </div>
+        <div class="stats-grid" style="margin-bottom:12px">
+            <div class="stat-card"><div class="stat-label">Sales Count</div><div class="stat-value">${cSales.length}</div></div>
+            <div class="stat-card"><div class="stat-label">Bundles Sold</div><div class="stat-value">${totalBundles}</div></div>
+            <div class="stat-card"><div class="stat-label">Collected</div><div class="stat-value" style="color:var(--success);font-size:16px">${fmtINR(totalRevenue)}</div></div>
+            <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--danger);font-size:16px">${fmtINR(pendingAmt)}</div></div>
+        </div>
+        <div class="action-row">
+            <button class="btn btn-outline btn-full" onclick="editSelectedCustomer()">Edit</button>
+            <button class="btn btn-danger btn-full" onclick="deleteCustomer('${id}')">Delete</button>
+        </div>
+    `;
+    openModal('modal-customer-view');
+}
+
+function editSelectedCustomer() {
+    const c = customers.find(x => x.id === selectedCustomerId);
+    if (c) { closeModal('modal-customer-view'); openAddCustomer(c); }
+}
+
+function deleteCustomer(id) {
+    showConfirm(async () => {
+        await db.collection('customers').doc(id).delete();
+        closeModal('modal-customer-view');
+        showToast('Customer deleted');
+    });
+}
+
+// ── SALES ────────────────────────────────────────────────────
+function buildSaleCard(s) {
+    const sc = s.status === 'paid' ? 'badge-paid' : s.status === 'partial' ? 'badge-partial' : 'badge-pending';
+    const sl = s.status === 'paid' ? 'Paid' : s.status === 'partial' ? 'Partial' : 'Pending';
+    return `
+        <div class="sale-card" onclick="viewSale('${s.id}')">
+            <div class="sale-top">
+                <div>
+                    <div class="sale-name">${esc(s.customerName||'Unknown')}</div>
+                    <div class="sale-meta">${fmtDate(s.date)}${s.stockNumber ? ' &nbsp;&#183;&nbsp; Stock '+s.stockNumber : ''}${s.location ? ' &nbsp;&#183;&nbsp; '+esc(s.location) : ''}</div>
+                </div>
+                <span class="badge ${sc}">${sl}</span>
+            </div>
+            <div class="sale-row">
+                <div class="sale-detail">&#128230; <b>${s.bundles}</b> bundles</div>
+                <div class="sale-detail">Rate: <b>&#8377;${s.rate}</b></div>
+            </div>
+            <div class="sale-amount">${fmtINR(s.total)}</div>
+        </div>`;
+}
+
+function renderSales() {
+    const el = document.getElementById('sales-list');
+    if (!el) return;
+    const today = todayStr();
+    const month = monthStr();
+
+    let filtered = sales;
+    if (salesFilter === 'pending') filtered = sales.filter(s => s.status === 'pending');
+    else if (salesFilter === 'partial') filtered = sales.filter(s => s.status === 'partial');
+    else if (salesFilter === 'paid') filtered = sales.filter(s => s.status === 'paid');
+    else if (salesFilter === 'today') filtered = sales.filter(s => s.date === today);
+    else if (salesFilter === 'month') filtered = sales.filter(s => s.date && s.date.startsWith(month));
+
+    // Summary bar
+    const sumEl = document.getElementById('sales-summary');
+    if (filtered.length > 0) {
+        const bundles = filtered.reduce((a,s)=>a+(s.bundles||0),0);
+        const total = filtered.reduce((a,s)=>a+(s.total||0),0);
+        sumEl.innerHTML = `<div style="background:var(--primary-light);border-radius:10px;padding:8px 12px;font-size:12px;color:var(--primary);font-weight:600">${filtered.length} sales &nbsp;&#183;&nbsp; ${bundles} bundles &nbsp;&#183;&nbsp; ${fmtINR(total)} total</div>`;
+    } else {
+        sumEl.innerHTML = '';
+    }
+
+    if (filtered.length === 0) {
+        el.innerHTML = '<div class="empty"><div class="eicon">&#128230;</div><p>No sales found</p></div>';
+        return;
+    }
+    el.innerHTML = filtered.map(s => buildSaleCard(s)).join('');
+}
+
+function setFilter(f, el) {
+    salesFilter = f;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    renderSales();
+}
+
+function fillStockDropdown() {
+    const sel = document.getElementById('s-stock');
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">-- Select Stock --</option>' +
+        stocks.map(s => `<option value="${s.stockNumber}">Stock ${s.stockNumber} (${s.source})</option>`).join('');
+    sel.value = cur;
+}
+
+function onCustomerChange() {
+    const sel = document.getElementById('s-customer');
+    const opt = sel.options[sel.selectedIndex];
+    if (opt && opt.dataset.rate) {
+        document.getElementById('s-rate').value = opt.dataset.rate;
+        calcSaleTotal();
+    }
+}
+
+function onStatusChange() {
+    const v = document.getElementById('s-status').value;
+    document.getElementById('payment-fields').style.display = (v==='paid'||v==='partial') ? 'block' : 'none';
+}
+
+function calcSaleTotal() {
+    const b = parseFloat(document.getElementById('s-bundles').value)||0;
+    const r = parseFloat(document.getElementById('s-rate').value)||0;
+    document.getElementById('s-total').value = b*r || '';
+}
+
+function calcStockTotal() {
+    const p = parseFloat(document.getElementById('st-purchase').value)||0;
+    const t = parseFloat(document.getElementById('st-transport').value)||0;
+    document.getElementById('st-total').value = p+t || '';
+}
+
+function openAddSale(s = null) {
+    document.getElementById('sale-modal-title').textContent = s ? 'Edit Sale' : 'Add Sale';
+    document.getElementById('s-id').value = s?.id||'';
+    document.getElementById('s-date').value = s?.date||todayStr();
+    document.getElementById('s-customer').value = s?.customerId||'';
+    document.getElementById('s-stock').value = s?.stockNumber||'';
+    document.getElementById('s-bundles').value = s?.bundles||'';
+    document.getElementById('s-rate').value = s?.rate||'';
+    document.getElementById('s-total').value = s?.total||'';
+    document.getElementById('s-status').value = s?.status||'pending';
+    document.getElementById('s-pay-mode').value = s?.paymentMode||'cash';
+    document.getElementById('s-pay-date').value = s?.paymentDate||'';
+    document.getElementById('s-pay-amount').value = s?.amountPaid||'';
+    document.getElementById('s-notes').value = s?.notes||'';
+    onStatusChange();
+    openModal('modal-sale');
+}
+
+async function saveSale(e) {
+    e.preventDefault();
+    const sel = document.getElementById('s-customer');
+    const opt = sel.options[sel.selectedIndex];
+    const stockNum = document.getElementById('s-stock').value;
+
+    const data = {
+        date: document.getElementById('s-date').value,
+        customerId: sel.value,
+        customerName: opt ? (opt.dataset.name || opt.text.split('—')[0].trim()) : '',
+        location: opt ? (opt.dataset.loc||'') : '',
+        stockNumber: stockNum ? parseInt(stockNum) : null,
+        bundles: parseInt(document.getElementById('s-bundles').value)||0,
+        rate: parseFloat(document.getElementById('s-rate').value)||0,
+        total: parseFloat(document.getElementById('s-total').value)||0,
+        status: document.getElementById('s-status').value,
+        paymentMode: document.getElementById('s-pay-mode').value,
+        paymentDate: document.getElementById('s-pay-date').value,
+        amountPaid: parseFloat(document.getElementById('s-pay-amount').value)||0,
+        notes: document.getElementById('s-notes').value.trim(),
+        updatedAt: new Date().toISOString()
+    };
+    try {
+        const id = document.getElementById('s-id').value;
+        if (id) {
+            await db.collection('sales').doc(id).update(data);
+            showToast('Sale updated!');
+        } else {
+            data.createdAt = new Date().toISOString();
+            await db.collection('sales').add(data);
+            showToast('Sale added!');
+        }
+        closeModal('modal-sale');
+    } catch(err) { showToast('Error: ' + err.message); }
+}
+
+function viewSale(id) {
+    selectedSaleId = id;
+    const s = sales.find(x => x.id === id);
+    if (!s) return;
+    const sc = s.status==='paid'?'badge-paid':s.status==='partial'?'badge-partial':'badge-pending';
+    const sl = s.status==='paid'?'Paid':s.status==='partial'?'Partial':'Pending';
+    const payModes = {cash:'Cash in Hand', phonepay:'Phone Pay', upi:'Other UPI', bank:'Bank Transfer'};
+    const balance = Math.max(0,(s.total||0)-(s.amountPaid||0));
+
+    document.getElementById('sale-view-content').innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+            <div>
+                <div style="font-size:18px;font-weight:800">${esc(s.customerName||'Unknown')}</div>
+                <div style="color:var(--gray-500);font-size:12px;margin-top:3px">${fmtDate(s.date)}${s.stockNumber?' &nbsp;&#183;&nbsp; Stock '+s.stockNumber:''}${s.location?' &nbsp;&#183;&nbsp; '+esc(s.location):''}</div>
+            </div>
+            <span class="badge ${sc}">${sl}</span>
+        </div>
+        <div class="card" style="margin-bottom:12px">
+            <div class="detail-row"><span class="dlabel">Bundles</span><span class="dval">${s.bundles}</span></div>
+            <div class="detail-row"><span class="dlabel">Rate / Bundle</span><span class="dval">&#8377;${s.rate}</span></div>
+            <div class="detail-row"><span class="dlabel">Total Amount</span><span class="dval" style="font-size:16px">${fmtINR(s.total)}</span></div>
+            ${s.status!=='pending'?`
+            <div class="divider"></div>
+            <div class="detail-row"><span class="dlabel">Payment Mode</span><span class="dval">${payModes[s.paymentMode]||s.paymentMode}</span></div>
+            <div class="detail-row"><span class="dlabel">Payment Date</span><span class="dval">${fmtDate(s.paymentDate)}</span></div>
+            <div class="detail-row"><span class="dlabel">Amount Paid</span><span class="dval" style="color:var(--success)">${fmtINR(s.amountPaid)}</span></div>
+            ${s.status==='partial'?`<div class="detail-row"><span class="dlabel">Balance Due</span><span class="dval" style="color:var(--danger)">${fmtINR(balance)}</span></div>`:''}
+            `:''}
+            ${s.notes?`<div class="divider"></div><div class="detail-row"><span class="dlabel">Notes</span><span class="dval">${esc(s.notes)}</span></div>`:''}
+        </div>
+        ${s.status==='pending'?`<button class="btn btn-success btn-full" onclick="markPaid('${s.id}')" style="margin-bottom:10px">&#10003; Mark as Paid (Cash)</button>`:''}
+        <div class="action-row">
+            <button class="btn btn-outline btn-full" onclick="editSelectedSale()">Edit</button>
+            <button class="btn btn-danger btn-full" onclick="deleteSale('${s.id}')">Delete</button>
+        </div>
+    `;
+    openModal('modal-sale-view');
+}
+
+function editSelectedSale() {
+    const s = sales.find(x => x.id === selectedSaleId);
+    if (s) { closeModal('modal-sale-view'); openAddSale(s); }
+}
+
+async function markPaid(id) {
+    const s = sales.find(x => x.id === id);
+    await db.collection('sales').doc(id).update({
+        status: 'paid', paymentMode: 'cash',
+        paymentDate: todayStr(), amountPaid: s?.total||0,
+        updatedAt: new Date().toISOString()
+    });
+    closeModal('modal-sale-view');
+    showToast('Marked as Paid!');
+}
+
+async function deleteSale(id) {
+    showConfirm(async () => {
+        await db.collection('sales').doc(id).delete();
+        closeModal('modal-sale-view');
+        showToast('Sale deleted');
+    });
+}
+
+// ── STOCK ────────────────────────────────────────────────────
+function renderStocks() {
+    const el = document.getElementById('stock-list');
+    if (!el) return;
+    if (stocks.length === 0) {
+        el.innerHTML = '<div class="empty"><div class="eicon">&#127981;</div><p>No stock records yet</p></div>';
+        return;
+    }
+    el.innerHTML = stocks.map(s => {
+        const soldBundles = sales.filter(x=>x.stockNumber==s.stockNumber).reduce((a,x)=>a+(x.bundles||0),0);
+        const remaining = (s.bundles||0) - soldBundles;
+        return `
+        <div class="stock-card">
+            <div class="stock-top">
+                <div>
+                    <div class="stock-num-label">Stock ${s.stockNumber}</div>
+                    <div class="stock-src">&#128205; ${esc(s.source)} &nbsp;&#183;&nbsp; ${fmtDate(s.date)}</div>
+                    ${s.supplier?`<div class="stock-src">Supplier: ${esc(s.supplier)}</div>`:''}
+                </div>
+                <div style="display:flex;gap:6px">
+                    <button class="btn-icon" onclick="editStock('${s.id}')">&#9998;</button>
+                    <button class="btn-icon" style="color:var(--danger)" onclick="deleteStock('${s.id}')">&#128465;</button>
+                </div>
+            </div>
+            <div class="stock-grid">
+                <div class="stock-stat"><div class="slabel">Total</div><div class="sval">${s.bundles} bundles</div></div>
+                <div class="stock-stat"><div class="slabel">Sold</div><div class="sval" style="color:var(--warning)">${soldBundles}</div></div>
+                <div class="stock-stat"><div class="slabel">Remaining</div><div class="sval" style="color:${remaining<0?'var(--danger)':'var(--success)'}">${remaining}</div></div>
+                <div class="stock-stat"><div class="slabel">Purchase</div><div class="sval">${fmtINR(s.purchaseCost)}</div></div>
+                <div class="stock-stat"><div class="slabel">Transport</div><div class="sval">${fmtINR(s.transportCost)}</div></div>
+                <div class="stock-stat"><div class="slabel">Total Cost</div><div class="sval">${fmtINR(s.totalCost)}</div></div>
+            </div>
+            ${s.notes?`<div style="margin-top:8px;font-size:12px;color:var(--gray-500)">&#128221; ${esc(s.notes)}</div>`:''}
+        </div>`;
+    }).join('');
+}
+
+function openAddStock(st = null) {
+    document.getElementById('stock-modal-title').textContent = st ? 'Edit Stock' : 'Add Stock Purchase';
+    document.getElementById('st-id').value = st?.id||'';
+    document.getElementById('st-num').value = st?.stockNumber||'';
+    document.getElementById('st-date').value = st?.date||todayStr();
+    document.getElementById('st-source').value = st?.source||'';
+    document.getElementById('st-supplier').value = st?.supplier||'';
+    document.getElementById('st-bundles').value = st?.bundles||'';
+    document.getElementById('st-purchase').value = st?.purchaseCost||'';
+    document.getElementById('st-transport').value = st?.transportCost||0;
+    document.getElementById('st-total').value = st?.totalCost||'';
+    document.getElementById('st-notes').value = st?.notes||'';
+    openModal('modal-stock');
+}
+
+function editStock(id) {
+    const s = stocks.find(x => x.id === id);
+    if (s) openAddStock(s);
+}
+
+async function saveStock(e) {
+    e.preventDefault();
+    const purchase = parseFloat(document.getElementById('st-purchase').value)||0;
+    const transport = parseFloat(document.getElementById('st-transport').value)||0;
+    const data = {
+        stockNumber: parseInt(document.getElementById('st-num').value),
+        date: document.getElementById('st-date').value,
+        source: document.getElementById('st-source').value.trim(),
+        supplier: document.getElementById('st-supplier').value.trim(),
+        bundles: parseInt(document.getElementById('st-bundles').value)||0,
+        purchaseCost: purchase,
+        transportCost: transport,
+        totalCost: purchase + transport,
+        notes: document.getElementById('st-notes').value.trim(),
+        updatedAt: new Date().toISOString()
+    };
+    try {
+        const id = document.getElementById('st-id').value;
+        if (id) {
+            await db.collection('stocks').doc(id).update(data);
+            showToast('Stock updated!');
+        } else {
+            data.createdAt = new Date().toISOString();
+            await db.collection('stocks').add(data);
+            showToast('Stock added!');
+        }
+        closeModal('modal-stock');
+    } catch(err) { showToast('Error: ' + err.message); }
+}
+
+async function deleteStock(id) {
+    showConfirm(async () => {
+        await db.collection('stocks').doc(id).delete();
+        showToast('Stock deleted');
+    });
+}
+
+// ── REPORTS ──────────────────────────────────────────────────
+function renderReports() {
+    const el = document.getElementById('reports-content');
+    if (!el) return;
+    if (sales.length === 0) {
+        el.innerHTML = '<div class="empty"><div class="eicon">&#128202;</div><p>No data yet</p></div>';
+        return;
+    }
+
+    // Group by month
+    const byMonth = {};
+    sales.forEach(s => {
+        if (!s.date) return;
+        const m = s.date.substring(0,7);
+        if (!byMonth[m]) byMonth[m] = [];
+        byMonth[m].push(s);
+    });
+
+    const months = Object.keys(byMonth).sort().reverse();
+    let html = months.map(m => {
+        const ms = byMonth[m];
+        const totalBundles = ms.reduce((a,s)=>a+(s.bundles||0),0);
+        const totalAmt = ms.reduce((a,s)=>a+(s.total||0),0);
+        const collected = ms.filter(s=>s.status==='paid').reduce((a,s)=>a+(s.total||0),0);
+        const partialCollected = ms.filter(s=>s.status==='partial').reduce((a,s)=>a+(s.amountPaid||0),0);
+        const pending = totalAmt - collected - partialCollected;
+        const [yr, mn] = m.split('-');
+        const label = new Date(yr, mn-1, 1).toLocaleString('en-IN',{month:'long',year:'numeric'});
+        return `
+        <div class="report-card">
+            <h3>&#128197; ${label}</h3>
+            <div class="report-row"><span>Sales Count</span><span class="rv">${ms.length} transactions</span></div>
+            <div class="report-row"><span>Bundles Sold</span><span class="rv">${totalBundles}</span></div>
+            <div class="report-row"><span>Total Revenue</span><span class="rv">${fmtINR(totalAmt)}</span></div>
+            <div class="report-row"><span>Collected</span><span class="rv" style="color:var(--success)">${fmtINR(collected+partialCollected)}</span></div>
+            <div class="report-row"><span>Pending</span><span class="rv" style="color:var(--danger)">${fmtINR(pending)}</span></div>
+        </div>`;
+    }).join('');
+
+    // Stock summary
+    if (stocks.length > 0) {
+        const totalStockCost = stocks.reduce((a,s)=>a+(s.totalCost||0),0);
+        const totalTransport = stocks.reduce((a,s)=>a+(s.transportCost||0),0);
+        html += `<div class="report-card"><h3>&#127981; Stock Purchase Summary</h3>`;
+        stocks.forEach(s => {
+            html += `<div class="report-row"><span>Stock ${s.stockNumber} &nbsp;<small style="color:var(--gray-500)">${s.source}</small></span><span class="rv">${fmtINR(s.totalCost)} &nbsp;&#183;&nbsp; ${s.bundles} bundles</span></div>`;
+        });
+        html += `<div class="report-row" style="margin-top:4px"><span>Total Stock Cost</span><span class="rv">${fmtINR(totalStockCost)}</span></div>`;
+        html += `<div class="report-row"><span>Total Transport</span><span class="rv">${fmtINR(totalTransport)}</span></div>`;
+        html += `</div>`;
+    }
+
+    el.innerHTML = html;
+}
+
+// ── XSS SAFE ESCAPE ──────────────────────────────────────────
+function esc(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── START ────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
