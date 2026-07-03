@@ -3,215 +3,308 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Paper Plate Manager</title>
+    <title>Manjunadha Disposable Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --primary-light: #dbeafe;
-            --success: #16a34a;
-            --success-light: #dcfce7;
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #eef2ff;
+            --primary-glow: #6366f1;
+            --accent: #0ea5e9;
+            --success: #059669;
+            --success-light: #d1fae5;
             --danger: #dc2626;
             --danger-light: #fee2e2;
             --warning: #d97706;
             --warning-light: #fef3c7;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-500: #6b7280;
-            --gray-700: #374151;
-            --gray-900: #111827;
-            --bg: #eff6ff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-500: #64748b;
+            --gray-700: #334155;
+            --gray-900: #0f172a;
+            --bg: #f4f6fb;
             --card: #ffffff;
-            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
-            --radius: 14px;
-            --radius-sm: 9px;
+            --shadow-sm: 0 1px 2px rgba(15,23,42,0.04), 0 1px 3px rgba(15,23,42,0.04);
+            --shadow: 0 2px 8px rgba(15,23,42,0.05), 0 1px 2px rgba(15,23,42,0.03);
+            --shadow-md: 0 8px 24px -8px rgba(15,23,42,0.12), 0 2px 6px rgba(15,23,42,0.05);
+            --shadow-lg: 0 20px 40px -12px rgba(15,23,42,0.18);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #6366f1 55%, #818cf8 100%);
+            --gradient-header: linear-gradient(135deg, #312e81 0%, #4338ca 55%, #4f46e5 100%);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg);
+            background-image:
+                radial-gradient(1200px 400px at -10% -20%, rgba(99,102,241,0.08), transparent 60%),
+                radial-gradient(900px 300px at 110% -10%, rgba(14,165,233,0.06), transparent 60%);
             color: var(--gray-900);
             min-height: 100vh;
-            padding-bottom: 72px;
+            padding-bottom: 84px;
+            font-feature-settings: "cv02","cv03","cv04","cv11";
         }
 
         /* HEADER */
         .header {
-            background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            background: var(--gradient-header);
             color: white;
-            padding: 16px 18px 14px;
+            padding: 18px 20px 16px;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 8px 24px -12px rgba(49,46,129,0.5);
+            border-radius: 0 0 22px 22px;
         }
-        .header-top { display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
-        .header-date { font-size: 12px; opacity: 0.8; background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 20px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .brand { display: flex; align-items: center; gap: 10px; min-width: 0; overflow: hidden; }
+        .brand-mark {
+            width: 34px; height: 34px; border-radius: 10px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(6px);
+            display: grid; place-items: center; font-size: 18px;
+            border: 1px solid rgba(255,255,255,0.25);
+        }
+        .header h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; line-height: 1.1; }
+        .header-sub { font-size: 11px; opacity: 0.75; letter-spacing: 0.2px; margin-top: 1px; }
+        .header-date {
+            font-size: 11.5px; opacity: 0.95;
+            background: rgba(255,255,255,0.14);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 4px 10px; border-radius: 999px; font-weight: 500;
+        }
 
         /* BOTTOM NAV */
         .bottom-nav {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: white; display: flex;
-            border-top: 1px solid var(--gray-200);
-            z-index: 100; box-shadow: 0 -2px 12px rgba(0,0,0,0.07);
+            position: fixed; bottom: 12px; left: 12px; right: 12px;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: saturate(180%) blur(14px);
+            -webkit-backdrop-filter: saturate(180%) blur(14px);
+            display: flex;
+            border: 1px solid var(--gray-200);
+            border-radius: 20px;
+            z-index: 100;
+            box-shadow: 0 12px 30px -10px rgba(15,23,42,0.18);
+            padding: 6px;
         }
         .nav-item {
             flex: 1; display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             padding: 8px 4px; cursor: pointer; border: none;
             background: none; font-size: 10px; color: var(--gray-500);
-            transition: color 0.15s; gap: 3px; font-weight: 500;
+            transition: all 0.2s ease; gap: 3px; font-weight: 600;
+            border-radius: 14px;
         }
-        .nav-item.active { color: var(--primary); }
-        .nav-item .nav-icon { font-size: 19px; line-height: 1; }
-        .nav-item.active .nav-label { color: var(--primary); }
+        .nav-item.active {
+            color: white;
+            background: var(--gradient-primary);
+            box-shadow: 0 6px 16px -6px rgba(79,70,229,0.6);
+        }
+        .nav-item .nav-icon { font-size: 18px; line-height: 1; }
+        .nav-item.active .nav-label { color: white; }
 
         /* PAGES */
-        .page { display: none; padding: 14px; }
+        .page { display: none; padding: 16px 14px; }
         .page.active { display: block; }
 
         /* CARDS */
-        .card { background: var(--card); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); margin-bottom: 12px; }
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 12px;
+            border: 1px solid var(--gray-100);
+        }
 
         /* STATS GRID */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-        .stat-card { background: var(--card); border-radius: var(--radius); padding: 14px 12px; box-shadow: var(--shadow); text-align: center; }
-        .stat-label { font-size: 10px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; }
-        .stat-value { font-size: 22px; font-weight: 800; color: var(--primary); margin-top: 3px; line-height: 1; }
-        .stat-sub { font-size: 11px; color: var(--gray-500); margin-top: 3px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+        .stat-card {
+            position: relative; overflow: hidden;
+            background: var(--card);
+            border: 1px solid var(--gray-100);
+            border-radius: var(--radius);
+            padding: 14px;
+            box-shadow: var(--shadow);
+        }
+        .stat-card::before {
+            content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: var(--gradient-primary); opacity: 0.9;
+        }
+        .stat-label { font-size: 10px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; }
+        .stat-value { font-size: 24px; font-weight: 800; color: var(--gray-900); margin-top: 6px; line-height: 1; letter-spacing: -0.5px; }
+        .stat-sub { font-size: 11.5px; color: var(--gray-500); margin-top: 4px; font-weight: 500; }
 
         /* SECTION HEADER */
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .section-header h2 { font-size: 16px; font-weight: 700; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 2px; }
+        .section-header h2 { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; }
 
         /* BUTTONS */
         .btn {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 9px 16px; border-radius: var(--radius-sm);
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 10px 16px; border-radius: var(--radius-sm);
             border: none; cursor: pointer; font-size: 13px;
             font-weight: 600; transition: all 0.15s; font-family: inherit;
+            letter-spacing: 0.1px;
         }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:active { background: var(--primary-dark); }
-        .btn-success { background: var(--success); color: white; }
+        .btn-primary { background: var(--gradient-primary); color: white; box-shadow: 0 6px 14px -6px rgba(79,70,229,0.55); }
+        .btn-primary:active { transform: translateY(1px); }
+        .btn-success { background: var(--success); color: white; box-shadow: 0 6px 14px -6px rgba(5,150,105,0.5); }
         .btn-danger { background: var(--danger); color: white; }
-        .btn-sm { padding: 6px 12px; font-size: 12px; }
-        .btn-outline { background: transparent; border: 1.5px solid var(--primary); color: var(--primary); }
+        .btn-sm { padding: 7px 12px; font-size: 12px; }
+        .btn-outline { background: transparent; border: 1.5px solid var(--gray-200); color: var(--gray-700); }
         .btn-full { width: 100%; justify-content: center; }
-        .btn-icon { background: var(--gray-100); border: none; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-icon {
+            background: var(--gray-100); border: none; width: 32px; height: 32px;
+            border-radius: 10px; cursor: pointer; font-size: 14px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--gray-700); transition: background 0.15s;
+        }
+        .btn-icon:hover { background: var(--gray-200); }
 
         /* CUSTOMER CARDS */
         .item-card {
-            background: white; border-radius: var(--radius); padding: 13px;
+            background: white; border-radius: var(--radius); padding: 14px;
             box-shadow: var(--shadow); margin-bottom: 10px; cursor: pointer;
-            border-left: 3px solid transparent; transition: border-color 0.15s;
+            border: 1px solid var(--gray-100);
+            border-left: 3px solid transparent;
+            transition: all 0.18s;
         }
-        .item-card:active { border-left-color: var(--primary); }
-        .item-card .item-name { font-weight: 700; font-size: 15px; }
-        .item-card .item-sub { font-size: 12px; color: var(--gray-500); margin-top: 3px; }
+        .item-card:hover, .item-card:active { border-left-color: var(--primary); transform: translateX(1px); }
+        .item-card .item-name { font-weight: 700; font-size: 15px; letter-spacing: -0.2px; }
+        .item-card .item-sub { font-size: 12px; color: var(--gray-500); margin-top: 4px; }
         .item-card .badge-row { margin-top: 7px; display: flex; gap: 6px; flex-wrap: wrap; }
 
         /* SALE CARD */
-        .sale-card { background: white; border-radius: var(--radius); padding: 13px; box-shadow: var(--shadow); margin-bottom: 10px; cursor: pointer; }
-        .sale-top { display: flex; justify-content: space-between; align-items: flex-start; }
-        .sale-name { font-weight: 700; font-size: 14px; }
-        .sale-meta { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
-        .sale-row { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+        .sale-card {
+            background: white; border-radius: var(--radius); padding: 14px;
+            box-shadow: var(--shadow); margin-bottom: 10px; cursor: pointer;
+            border: 1px solid var(--gray-100);
+            transition: transform 0.15s;
+        }
+        .sale-card:active { transform: scale(0.995); }
+        .sale-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .sale-name { font-weight: 700; font-size: 14.5px; letter-spacing: -0.2px; }
+        .sale-meta { font-size: 11.5px; color: var(--gray-500); margin-top: 3px; }
+        .sale-row { display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
         .sale-detail { font-size: 12px; color: var(--gray-700); }
-        .sale-detail b { font-weight: 700; }
-        .sale-amount { font-size: 17px; font-weight: 800; margin-top: 7px; }
+        .sale-detail b { font-weight: 700; color: var(--gray-900); }
+        .sale-amount { font-size: 18px; font-weight: 800; margin-top: 8px; letter-spacing: -0.4px; color: var(--gray-900); }
 
         /* STOCK CARD */
-        .stock-card { background: white; border-radius: var(--radius); padding: 13px; box-shadow: var(--shadow); margin-bottom: 10px; }
-        .stock-top { display: flex; justify-content: space-between; align-items: flex-start; }
-        .stock-num-label { font-size: 18px; font-weight: 800; color: var(--primary); }
-        .stock-src { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
-        .stock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
-        .stock-stat { background: var(--gray-50); border-radius: 8px; padding: 8px 10px; }
-        .stock-stat .slabel { font-size: 10px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.4px; }
-        .stock-stat .sval { font-size: 14px; font-weight: 700; margin-top: 2px; }
+        .stock-card {
+            background: white; border-radius: var(--radius); padding: 14px;
+            box-shadow: var(--shadow); margin-bottom: 10px;
+            border: 1px solid var(--gray-100);
+        }
+        .stock-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .stock-num-label { font-size: 18px; font-weight: 800; color: var(--primary); letter-spacing: -0.3px; }
+        .stock-src { font-size: 12px; color: var(--gray-500); margin-top: 3px; }
+        .stock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 12px; }
+        .stock-stat { background: var(--gray-50); border-radius: 10px; padding: 9px 11px; border: 1px solid var(--gray-100); }
+        .stock-stat .slabel { font-size: 10px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+        .stock-stat .sval { font-size: 14px; font-weight: 700; margin-top: 3px; }
 
         /* BADGE */
-        .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
         .badge-paid { background: var(--success-light); color: var(--success); }
         .badge-pending { background: var(--danger-light); color: var(--danger); }
         .badge-partial { background: var(--warning-light); color: var(--warning); }
         .badge-blue { background: var(--primary-light); color: var(--primary); }
 
         /* FILTER BAR */
-        .filter-bar { display: flex; gap: 7px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 3px; }
+        .filter-bar { display: flex; gap: 7px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; }
         .filter-bar::-webkit-scrollbar { display: none; }
         .chip {
-            flex-shrink: 0; padding: 5px 13px; border-radius: 20px;
+            flex-shrink: 0; padding: 7px 14px; border-radius: 999px;
             border: 1.5px solid var(--gray-200); background: white;
-            font-size: 12px; cursor: pointer; font-weight: 500; color: var(--gray-700);
+            font-size: 12px; cursor: pointer; font-weight: 600; color: var(--gray-700);
+            transition: all 0.15s;
         }
-        .chip.active { background: var(--primary); border-color: var(--primary); color: white; }
+        .chip.active { background: var(--gradient-primary); border-color: transparent; color: white; box-shadow: 0 4px 12px -4px rgba(79,70,229,0.5); }
 
         /* MODAL */
         .modal-overlay {
             display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.45); z-index: 200; align-items: flex-end;
+            background: rgba(15,23,42,0.55);
+            backdrop-filter: blur(4px);
+            z-index: 200; align-items: flex-end;
         }
         .modal-overlay.open { display: flex; }
         .modal {
-            background: white; border-radius: 20px 20px 0 0;
+            background: white; border-radius: 22px 22px 0 0;
             width: 100%; max-height: 92vh; overflow-y: auto;
-            padding: 0 18px 24px; animation: slideUp 0.25s ease;
+            padding: 0 20px 28px; animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 -12px 40px -12px rgba(15,23,42,0.25);
         }
-        .modal-handle { width: 36px; height: 4px; background: var(--gray-200); border-radius: 2px; margin: 10px auto 14px; }
+        .modal-handle { width: 40px; height: 4px; background: var(--gray-200); border-radius: 999px; margin: 12px auto 16px; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-        .modal-header h3 { font-size: 17px; font-weight: 700; }
-        .modal-close { background: var(--gray-100); border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h3 { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; }
+        .modal-close {
+            background: var(--gray-100); border: none; width: 32px; height: 32px;
+            border-radius: 50%; cursor: pointer; font-size: 14px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gray-700);
+        }
 
         /* FORM */
         .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--gray-700); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+        .form-group label { display: block; font-size: 11px; font-weight: 700; color: var(--gray-700); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.6px; }
         .form-group input, .form-group select, .form-group textarea {
-            width: 100%; padding: 11px 12px; border: 1.5px solid var(--gray-200);
+            width: 100%; padding: 12px 14px; border: 1.5px solid var(--gray-200);
             border-radius: var(--radius-sm); font-size: 14px; outline: none;
-            transition: border-color 0.15s; font-family: inherit; background: white; color: var(--gray-900);
+            transition: all 0.15s; font-family: inherit; background: white; color: var(--gray-900);
         }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79,70,229,0.12);
+        }
         .form-group input[readonly] { background: var(--gray-50); color: var(--gray-700); }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
         /* DETAIL VIEW */
-        .detail-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--gray-100); font-size: 13px; }
+        .detail-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--gray-100); font-size: 13px; }
         .detail-row:last-child { border-bottom: none; }
-        .detail-row .dlabel { color: var(--gray-500); flex-shrink: 0; }
-        .detail-row .dval { font-weight: 600; text-align: right; margin-left: 10px; }
+        .detail-row .dlabel { color: var(--gray-500); flex-shrink: 0; font-weight: 500; }
+        .detail-row .dval { font-weight: 600; text-align: right; margin-left: 10px; color: var(--gray-900); }
 
         /* EMPTY STATE */
-        .empty { text-align: center; padding: 40px 20px; color: var(--gray-500); }
-        .empty .eicon { font-size: 38px; margin-bottom: 10px; }
-        .empty p { font-size: 13px; line-height: 1.5; }
+        .empty { text-align: center; padding: 48px 20px; color: var(--gray-500); }
+        .empty .eicon { font-size: 42px; margin-bottom: 12px; opacity: 0.7; }
+        .empty p { font-size: 13.5px; line-height: 1.5; }
 
         /* TOAST */
         .toast {
-            position: fixed; bottom: 82px; left: 50%; transform: translateX(-50%);
-            background: var(--gray-900); color: white; padding: 9px 18px;
-            border-radius: 20px; font-size: 13px; z-index: 400;
-            opacity: 0; transition: opacity 0.25s; white-space: nowrap; pointer-events: none;
+            position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%);
+            background: var(--gray-900); color: white; padding: 10px 18px;
+            border-radius: 999px; font-size: 13px; z-index: 400;
+            opacity: 0; transition: opacity 0.25s, transform 0.25s;
+            white-space: nowrap; pointer-events: none;
+            box-shadow: 0 10px 30px -6px rgba(15,23,42,0.4);
+            font-weight: 500;
         }
-        .toast.show { opacity: 1; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
 
         /* CONFIRM */
-        .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
+        .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.55); backdrop-filter: blur(4px); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
         .confirm-overlay.open { display: flex; }
-        .confirm-box { background: white; border-radius: var(--radius); padding: 22px; width: 100%; max-width: 300px; text-align: center; }
-        .confirm-box h4 { font-size: 16px; margin-bottom: 6px; }
-        .confirm-box p { font-size: 13px; color: var(--gray-500); margin-bottom: 18px; }
+        .confirm-box { background: white; border-radius: var(--radius); padding: 24px; width: 100%; max-width: 320px; text-align: center; box-shadow: var(--shadow-lg); }
+        .confirm-box h4 { font-size: 17px; margin-bottom: 8px; letter-spacing: -0.2px; }
+        .confirm-box p { font-size: 13px; color: var(--gray-500); margin-bottom: 20px; line-height: 1.5; }
         .confirm-btns { display: flex; gap: 10px; }
 
         /* REPORT */
-        .report-card { background: white; border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); margin-bottom: 12px; }
-        .report-card h3 { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 10px; }
-        .report-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--gray-100); }
+        .report-card { background: white; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 12px; border: 1px solid var(--gray-100); }
+        .report-card h3 { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 12px; letter-spacing: -0.2px; }
+        .report-row { display: flex; justify-content: space-between; font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--gray-100); }
         .report-row:last-child { border-bottom: none; font-weight: 700; }
         .report-row .rv { font-weight: 600; }
 
@@ -223,46 +316,125 @@
 
         @media (min-width: 560px) {
             body { max-width: 560px; margin: 0 auto; }
+            .bottom-nav { max-width: 536px; left: 50%; transform: translateX(-50%); }
         }
 
         /* LOGIN SCREEN */
         #login-screen {
             position: fixed; inset: 0;
-            background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            background:
+                radial-gradient(600px 400px at 15% 15%, rgba(129,140,248,0.35), transparent 60%),
+                radial-gradient(700px 500px at 85% 90%, rgba(14,165,233,0.28), transparent 60%),
+                linear-gradient(160deg, #1e1b4b 0%, #312e81 45%, #3730a3 100%);
             z-index: 1000; display: flex; align-items: center;
             justify-content: center; padding: 24px;
+            overflow: hidden;
         }
+        #login-screen::before, #login-screen::after {
+            content: ""; position: absolute; border-radius: 50%;
+            filter: blur(60px); opacity: 0.5; pointer-events: none;
+        }
+        #login-screen::before { width: 300px; height: 300px; background: #6366f1; top: -80px; right: -60px; }
+        #login-screen::after { width: 260px; height: 260px; background: #0ea5e9; bottom: -80px; left: -40px; }
         #login-screen.hidden { display: none; }
+
         .login-box {
-            background: white; border-radius: 20px; padding: 32px 24px;
-            width: 100%; max-width: 360px; text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            position: relative; z-index: 2;
+            background: rgba(255,255,255,0.98);
+            border-radius: 24px;
+            padding: 36px 28px 28px;
+            width: 100%; max-width: 380px;
+            box-shadow: 0 30px 80px -20px rgba(15,23,42,0.6), 0 0 0 1px rgba(255,255,255,0.15) inset;
+            animation: loginPop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .login-logo { font-size: 52px; margin-bottom: 12px; }
-        .login-title { font-size: 20px; font-weight: 800; color: var(--gray-900); margin-bottom: 4px; }
-        .login-sub { font-size: 13px; color: var(--gray-500); margin-bottom: 24px; }
+        @keyframes loginPop {
+            from { opacity: 0; transform: translateY(16px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .login-logo-wrap {
+            width: 68px; height: 68px; margin: 0 auto 18px;
+            border-radius: 20px;
+            background: var(--gradient-primary);
+            display: grid; place-items: center;
+            font-size: 34px;
+            box-shadow: 0 14px 30px -8px rgba(79,70,229,0.6), 0 0 0 6px rgba(79,70,229,0.08);
+            color: white;
+        }
+        .login-title {
+            font-size: 22px; font-weight: 800; color: var(--gray-900);
+            margin-bottom: 6px; text-align: center; letter-spacing: -0.5px;
+        }
+        .login-sub {
+            font-size: 13px; color: var(--gray-500); margin-bottom: 26px;
+            text-align: center; font-weight: 500;
+        }
+        .login-field-label {
+            display: block; font-size: 11px; font-weight: 700;
+            color: var(--gray-700); margin-bottom: 8px;
+            text-transform: uppercase; letter-spacing: 0.6px;
+        }
+        .login-input-wrap { position: relative; margin-bottom: 6px; }
+        .login-input-icon {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            font-size: 15px; color: var(--gray-500); pointer-events: none;
+        }
         .login-input {
-            width: 100%; padding: 13px 14px; border: 1.5px solid var(--gray-200);
-            border-radius: var(--radius-sm); font-size: 16px; outline: none;
-            font-family: inherit; margin-bottom: 12px; text-align: center;
-            letter-spacing: 3px; transition: border-color 0.15s;
+            width: 100%; padding: 14px 46px 14px 40px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: 12px; font-size: 15px; outline: none;
+            font-family: inherit;
+            background: var(--gray-50);
+            transition: all 0.15s;
+            letter-spacing: 1px;
+            color: var(--gray-900);
         }
-        .login-input:focus { border-color: var(--primary); }
+        .login-input:focus {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(79,70,229,0.14);
+        }
+        .login-input::placeholder { letter-spacing: 0.3px; color: var(--gray-500); font-weight: 500; }
+        .login-toggle {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            background: transparent; border: none; cursor: pointer;
+            width: 34px; height: 34px; border-radius: 8px;
+            display: grid; place-items: center; font-size: 15px;
+            color: var(--gray-500);
+        }
+        .login-toggle:hover { background: var(--gray-100); color: var(--gray-700); }
         .login-btn {
-            width: 100%; padding: 13px; background: var(--primary); color: white;
-            border: none; border-radius: var(--radius-sm); font-size: 15px;
+            width: 100%; padding: 14px;
+            background: var(--gradient-primary); color: white;
+            border: none; border-radius: 12px; font-size: 15px;
             font-weight: 700; cursor: pointer; font-family: inherit;
+            margin-top: 18px; letter-spacing: 0.2px;
+            box-shadow: 0 10px 24px -8px rgba(79,70,229,0.6);
+            transition: transform 0.12s, box-shadow 0.15s;
         }
-        .login-btn:active { background: var(--primary-dark); }
-        .login-error { color: var(--danger); font-size: 13px; margin-top: 10px; min-height: 18px; }
+        .login-btn:hover { box-shadow: 0 14px 30px -8px rgba(79,70,229,0.7); }
+        .login-btn:active { transform: translateY(1px); }
+        .login-error {
+            color: var(--danger); font-size: 12.5px; margin-top: 12px;
+            min-height: 18px; text-align: center; font-weight: 500;
+        }
+        .login-footer {
+            margin-top: 22px; padding-top: 18px;
+            border-top: 1px solid var(--gray-100);
+            text-align: center; font-size: 11px;
+            color: var(--gray-500); letter-spacing: 0.3px;
+        }
+        .login-footer b { color: var(--gray-700); font-weight: 700; }
 
         /* LOGOUT BUTTON */
         .btn-logout {
-            background: rgba(255,255,255,0.18); border: none; color: white;
-            padding: 5px 11px; border-radius: 20px; font-size: 12px;
+            background: rgba(255,255,255,0.16);
+            border: 1px solid rgba(255,255,255,0.22);
+            color: white;
+            padding: 6px 12px; border-radius: 999px; font-size: 12px;
             cursor: pointer; font-weight: 600; font-family: inherit;
+            transition: background 0.15s;
         }
-        .btn-logout:active { background: rgba(255,255,255,0.3); }
+        .btn-logout:hover { background: rgba(255,255,255,0.26); }
     </style>
 </head>
 <body>
@@ -270,21 +442,35 @@
 <!-- LOGIN SCREEN -->
 <div id="login-screen">
     <div class="login-box">
-        <div class="login-logo">🍽️</div>
-        <div class="login-title">Paper Plate Manager</div>
-        <div class="login-sub">Kanagarla Disposable Business</div>
-        <input type="password" id="login-password" class="login-input" placeholder="Enter password"
-            onkeydown="if(event.key==='Enter') doLogin()">
-        <button class="login-btn" onclick="doLogin()">Login</button>
+        <div class="login-logo-wrap">🍽️</div>
+        <div class="login-title">Manjunadha Disposable Hub</div>
+        <div class="login-sub">Business Manager — Enter password to continue</div>
+        <label class="login-field-label" for="login-password">Access Password</label>
+        <div class="login-input-wrap">
+            <span class="login-input-icon">🔒</span>
+            <input type="password" id="login-password" class="login-input" placeholder="Enter password"
+                autocomplete="current-password"
+                onkeydown="if(event.key==='Enter') doLogin()">
+            <button type="button" class="login-toggle" onclick="togglePw()" aria-label="Show password" id="login-toggle-btn">👁️</button>
+        </div>
+        <button class="login-btn" onclick="doLogin()">Sign in →</button>
         <div class="login-error" id="login-error"></div>
+        <div class="login-footer">Secured workspace · <b>Kanagarla</b></div>
     </div>
+</div>
 </div>
 
 <!-- HEADER -->
 <div class="header">
     <div class="header-top">
-        <h1>Paper Plate Manager</h1>
-        <div style="display:flex;align-items:center;gap:8px">
+        <div class="brand">
+            <div class="brand-mark">🍽️</div>
+            <div>
+                <h1>Manjunadha Disposable Hub</h1>
+                <div class="header-sub">Business Manager</div>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap">
             <span class="header-date" id="header-date">Loading...</span>
             <button class="btn-logout" onclick="doLogout()">Logout</button>
         </div>
@@ -372,10 +558,18 @@
 <div class="page" id="page-stock">
     <div class="section-header">
         <h2>Stock Purchase</h2>
-        <button class="btn btn-primary btn-sm" onclick="openAddStock()">+ Add</button>
+        <button class="btn btn-primary btn-sm" onclick="openAddStock()">+ Add Stock</button>
     </div>
     <div id="stock-list">
         <div class="empty"><div class="eicon">&#127981;</div><p>No stock records yet</p></div>
+    </div>
+
+    <div class="section-header" style="margin-top:16px">
+        <h2>Monthly Expenses</h2>
+        <button class="btn btn-primary btn-sm" onclick="openAddExpense()">+ Add</button>
+    </div>
+    <div id="expense-list">
+        <div class="empty"><div class="eicon">&#128179;</div><p>No expenses added yet</p></div>
     </div>
 </div>
 
@@ -576,6 +770,10 @@
                 </div>
             </div>
             <div class="form-group">
+                <label>Billing Month * <span style="font-weight:400;color:var(--gray-500);font-size:11px">(month this stock counts under in reports)</span></label>
+                <input type="month" id="st-month" required>
+            </div>
+            <div class="form-group">
                 <label>Source Location *</label>
                 <input type="text" id="st-source" placeholder="Where stock came from" required>
             </div>
@@ -601,11 +799,82 @@
                 <label>Total Cost (&#8377;)</label>
                 <input type="number" id="st-total" readonly>
             </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Payment Mode *</label>
+                    <select id="st-pay-mode">
+                        <option value="cash">Cash</option>
+                        <option value="phonepay">Phone Pay</option>
+                        <option value="upi">UPI</option>
+                        <option value="bank">Bank Transfer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Payment Date *</label>
+                    <input type="date" id="st-pay-date">
+                </div>
+            </div>
+            <div style="margin:6px 0 10px;font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;border-top:1px solid var(--gray-100);padding-top:12px">Stock Return (Optional)</div>
+            <div class="form-group">
+                <label>Return Bundles</label>
+                <input type="number" id="st-return" placeholder="0" min="0" value="0">
+            </div>
             <div class="form-group">
                 <label>Notes</label>
                 <textarea id="st-notes" placeholder="Extra details about this stock" rows="2"></textarea>
             </div>
             <button type="submit" class="btn btn-primary btn-full" style="margin-top:4px">Save Stock</button>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: MONTHLY EXPENSES -->
+<div class="modal-overlay" id="modal-expense">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <h3 id="expense-modal-title">Add Monthly Expenses</h3>
+            <button class="modal-close" onclick="closeModal('modal-expense')">&#x2715;</button>
+        </div>
+        <form id="expense-form" onsubmit="saveExpense(event)">
+            <input type="hidden" id="ex-id">
+            <div class="form-group">
+                <label>Month *</label>
+                <input type="month" id="ex-month" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Shop Rent (&#8377;)</label>
+                    <input type="number" id="ex-rent" placeholder="0" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Petrol / Travel (&#8377;)</label>
+                    <input type="number" id="ex-petrol" placeholder="0" min="0" value="0">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Electricity Bill (&#8377;)</label>
+                    <input type="number" id="ex-electricity" placeholder="0" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Other Expenses (&#8377;)</label>
+                    <input type="number" id="ex-other" placeholder="0" min="0" value="0">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Other Expense Notes</label>
+                <input type="text" id="ex-other-notes" placeholder="What is the other expense?">
+            </div>
+            <div class="form-group">
+                <label>Savings (&#8377;)</label>
+                <input type="number" id="ex-savings" placeholder="0" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="ex-notes" placeholder="Any extra notes..." rows="2"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" style="margin-top:4px">Save Expenses</button>
         </form>
     </div>
 </div>
@@ -650,6 +919,7 @@ const db = firebase.firestore();
 let customers = [];
 let sales = [];
 let stocks = [];
+let expenses = [];
 let salesFilter = 'all';
 let deleteHandler = null;
 let selectedCustomerId = null;
@@ -681,6 +951,12 @@ function init() {
         renderStocks();
         fillStockDropdown();
         renderDashboard();
+    }, err => showToast('DB Error: ' + err.code));
+
+    db.collection('expenses').orderBy('month', 'desc').onSnapshot(snap => {
+        expenses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderExpenses();
+        renderReports();
     }, err => showToast('DB Error: ' + err.code));
 }
 
@@ -1133,6 +1409,7 @@ function renderStocks() {
                     <div class="stock-num-label">Stock ${s.stockNumber}</div>
                     <div class="stock-src">&#128205; ${esc(s.source)} &nbsp;&#183;&nbsp; ${fmtDate(s.date)}</div>
                     ${s.supplier?`<div class="stock-src">Supplier: ${esc(s.supplier)}</div>`:''}
+                    ${s.billingMonth?`<div class="stock-src">&#128197; Billing Month: ${new Date(s.billingMonth+'-01').toLocaleString('en-IN',{month:'long',year:'numeric'})}</div>`:''}
                 </div>
                 <div style="display:flex;gap:6px">
                     <button class="btn-icon" onclick="editStock('${s.id}')">&#9998;</button>
@@ -1145,9 +1422,11 @@ function renderStocks() {
                 <div class="stock-stat"><div class="slabel">Remaining</div><div class="sval" style="color:${remaining<0?'var(--danger)':'var(--success)'}">${remaining}</div></div>
                 <div class="stock-stat"><div class="slabel">Purchase</div><div class="sval">${fmtINR(s.purchaseCost)}</div></div>
                 <div class="stock-stat"><div class="slabel">Transport</div><div class="sval">${fmtINR(s.transportCost)}</div></div>
-                <div class="stock-stat"><div class="slabel">Total Cost</div><div class="sval">${fmtINR(s.totalCost)}</div></div>
+                <div class="stock-stat"><div class="slabel">Stock Cost</div><div class="sval">${fmtINR(s.totalCost)}</div></div>
+                ${s.returnBundles?`<div class="stock-stat"><div class="slabel">Returned</div><div class="sval" style="color:var(--danger)">${s.returnBundles} bundles</div></div>`:''}
             </div>
-            ${s.notes?`<div style="margin-top:8px;font-size:12px;color:var(--gray-500)">&#128221; ${esc(s.notes)}</div>`:''}
+            ${s.paymentMode?`<div style="margin-top:6px;font-size:11px;color:var(--gray-500)">&#128179; Paid via ${s.paymentMode}${s.paymentDate?' on '+fmtDate(s.paymentDate):''}</div>`:''}
+            ${s.notes?`<div style="margin-top:6px;font-size:12px;color:var(--gray-500)">&#128221; ${esc(s.notes)}</div>`:''}
         </div>`;
     }).join('');
 }
@@ -1157,12 +1436,16 @@ function openAddStock(st = null) {
     document.getElementById('st-id').value = st?.id||'';
     document.getElementById('st-num').value = st?.stockNumber||'';
     document.getElementById('st-date').value = st?.date||todayStr();
+    document.getElementById('st-month').value = st?.billingMonth||monthStr();
     document.getElementById('st-source').value = st?.source||'';
     document.getElementById('st-supplier').value = st?.supplier||'';
     document.getElementById('st-bundles').value = st?.bundles||'';
     document.getElementById('st-purchase').value = st?.purchaseCost||'';
     document.getElementById('st-transport').value = st?.transportCost||0;
     document.getElementById('st-total').value = st?.totalCost||'';
+    document.getElementById('st-pay-mode').value = st?.paymentMode||'cash';
+    document.getElementById('st-pay-date').value = st?.paymentDate||todayStr();
+    document.getElementById('st-return').value = st?.returnBundles||0;
     document.getElementById('st-notes').value = st?.notes||'';
     openModal('modal-stock');
 }
@@ -1179,12 +1462,16 @@ async function saveStock(e) {
     const data = {
         stockNumber: parseInt(document.getElementById('st-num').value),
         date: document.getElementById('st-date').value,
+        billingMonth: document.getElementById('st-month').value,
         source: document.getElementById('st-source').value.trim(),
         supplier: document.getElementById('st-supplier').value.trim(),
         bundles: parseInt(document.getElementById('st-bundles').value)||0,
         purchaseCost: purchase,
         transportCost: transport,
         totalCost: purchase + transport,
+        paymentMode: document.getElementById('st-pay-mode').value,
+        paymentDate: document.getElementById('st-pay-date').value,
+        returnBundles: parseInt(document.getElementById('st-return').value)||0,
         notes: document.getElementById('st-notes').value.trim(),
         updatedAt: new Date().toISOString()
     };
@@ -1206,6 +1493,96 @@ async function deleteStock(id) {
     showConfirm(async () => {
         await db.collection('stocks').doc(id).delete();
         showToast('Stock deleted');
+    });
+}
+
+// ── MONTHLY EXPENSES ─────────────────────────────────────────
+function renderExpenses() {
+    const el = document.getElementById('expense-list');
+    if (!el) return;
+    if (expenses.length === 0) {
+        el.innerHTML = '<div class="empty"><div class="eicon">&#128179;</div><p>No expenses added yet</p></div>';
+        return;
+    }
+    el.innerHTML = expenses.map(ex => {
+        const total = (ex.rent||0)+(ex.petrol||0)+(ex.electricity||0)+(ex.other||0);
+        const [yr, mn] = ex.month.split('-');
+        const label = new Date(yr, mn-1, 1).toLocaleString('en-IN',{month:'long',year:'numeric'});
+        return `
+        <div class="stock-card">
+            <div class="stock-top">
+                <div>
+                    <div class="stock-num-label" style="font-size:15px">&#128197; ${label}</div>
+                </div>
+                <div style="display:flex;gap:6px">
+                    <button class="btn-icon" onclick="editExpense('${ex.id}')">&#9998;</button>
+                    <button class="btn-icon" style="color:var(--danger)" onclick="deleteExpense('${ex.id}')">&#128465;</button>
+                </div>
+            </div>
+            <div class="stock-grid">
+                ${ex.rent?`<div class="stock-stat"><div class="slabel">&#127968; Rent</div><div class="sval">${fmtINR(ex.rent)}</div></div>`:''}
+                ${ex.petrol?`<div class="stock-stat"><div class="slabel">&#9981; Petrol</div><div class="sval">${fmtINR(ex.petrol)}</div></div>`:''}
+                ${ex.electricity?`<div class="stock-stat"><div class="slabel">&#9889; Electricity</div><div class="sval">${fmtINR(ex.electricity)}</div></div>`:''}
+                ${ex.other?`<div class="stock-stat"><div class="slabel">&#128179; Other</div><div class="sval">${fmtINR(ex.other)}</div></div>`:''}
+                ${ex.savings?`<div class="stock-stat"><div class="slabel">&#128176; Savings</div><div class="sval" style="color:var(--success)">${fmtINR(ex.savings)}</div></div>`:''}
+                <div class="stock-stat"><div class="slabel">Total Exp.</div><div class="sval" style="color:var(--warning)">${fmtINR(total)}</div></div>
+            </div>
+            ${ex.other&&ex.otherNotes?`<div style="margin-top:6px;font-size:11px;color:var(--gray-500)">Other: ${esc(ex.otherNotes)}</div>`:''}
+            ${ex.notes?`<div style="margin-top:6px;font-size:12px;color:var(--gray-500)">&#128221; ${esc(ex.notes)}</div>`:''}
+        </div>`;
+    }).join('');
+}
+
+function openAddExpense(ex = null) {
+    document.getElementById('expense-modal-title').textContent = ex ? 'Edit Monthly Expenses' : 'Add Monthly Expenses';
+    document.getElementById('ex-id').value = ex?.id||'';
+    document.getElementById('ex-month').value = ex?.month||monthStr();
+    document.getElementById('ex-rent').value = ex?.rent||0;
+    document.getElementById('ex-petrol').value = ex?.petrol||0;
+    document.getElementById('ex-electricity').value = ex?.electricity||0;
+    document.getElementById('ex-other').value = ex?.other||0;
+    document.getElementById('ex-other-notes').value = ex?.otherNotes||'';
+    document.getElementById('ex-savings').value = ex?.savings||0;
+    document.getElementById('ex-notes').value = ex?.notes||'';
+    openModal('modal-expense');
+}
+
+function editExpense(id) {
+    const ex = expenses.find(x => x.id === id);
+    if (ex) openAddExpense(ex);
+}
+
+async function saveExpense(e) {
+    e.preventDefault();
+    const data = {
+        month: document.getElementById('ex-month').value,
+        rent: parseFloat(document.getElementById('ex-rent').value)||0,
+        petrol: parseFloat(document.getElementById('ex-petrol').value)||0,
+        electricity: parseFloat(document.getElementById('ex-electricity').value)||0,
+        other: parseFloat(document.getElementById('ex-other').value)||0,
+        otherNotes: document.getElementById('ex-other-notes').value.trim(),
+        savings: parseFloat(document.getElementById('ex-savings').value)||0,
+        notes: document.getElementById('ex-notes').value.trim(),
+        updatedAt: new Date().toISOString()
+    };
+    try {
+        const id = document.getElementById('ex-id').value;
+        if (id) {
+            await db.collection('expenses').doc(id).update(data);
+            showToast('Expenses updated!');
+        } else {
+            data.createdAt = new Date().toISOString();
+            await db.collection('expenses').add(data);
+            showToast('Expenses saved!');
+        }
+        closeModal('modal-expense');
+    } catch(err) { showToast('Error: ' + err.message); }
+}
+
+async function deleteExpense(id) {
+    showConfirm(async () => {
+        await db.collection('expenses').doc(id).delete();
+        showToast('Expense deleted');
     });
 }
 
@@ -1237,29 +1614,61 @@ function renderReports() {
         const pending = totalAmt - collected - partialCollected;
         const [yr, mn] = m.split('-');
         const label = new Date(yr, mn-1, 1).toLocaleString('en-IN',{month:'long',year:'numeric'});
+
+        // Stocks for this billing month
+        const monthStocks = stocks.filter(s => (s.billingMonth||s.date?.substring(0,7)) === m);
+
+        // Monthly expenses from separate expenses collection
+        const ex = expenses.find(x => x.month === m);
+        const totalRent = ex?.rent||0;
+        const totalPetrol = ex?.petrol||0;
+        const totalElec = ex?.electricity||0;
+        const totalOther = ex?.other||0;
+        const totalExpenses = totalRent + totalPetrol + totalElec + totalOther;
+        const totalSavings = ex?.savings||0;
+
         return `
         <div class="report-card">
             <h3>&#128197; ${label}</h3>
-            <div class="report-row"><span>Sales Count</span><span class="rv">${ms.length} transactions</span></div>
+
+            <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px">Sales</div>
+            <div class="report-row"><span>Transactions</span><span class="rv">${ms.length}</span></div>
             <div class="report-row"><span>Bundles Sold</span><span class="rv">${totalBundles}</span></div>
             <div class="report-row"><span>Total Revenue</span><span class="rv">${fmtINR(totalAmt)}</span></div>
             <div class="report-row"><span>Collected</span><span class="rv" style="color:var(--success)">${fmtINR(collected+partialCollected)}</span></div>
             <div class="report-row"><span>Pending</span><span class="rv" style="color:var(--danger)">${fmtINR(pending)}</span></div>
+
+            ${monthStocks.length > 0 ? `
+            <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.4px;margin:10px 0 6px;border-top:1px solid var(--gray-100);padding-top:10px">Stocks This Month</div>
+            ${monthStocks.map(s => {
+                const soldB = sales.filter(x=>x.stockNumber==s.stockNumber).reduce((a,x)=>a+(x.bundles||0),0);
+                const remB = (s.bundles||0) - soldB;
+                return `<div class="report-row">
+                    <span>Stock ${s.stockNumber} &nbsp;<small style="color:var(--gray-500)">${esc(s.source)}${s.supplier?' · '+esc(s.supplier):''}</small></span>
+                    <span class="rv" style="text-align:right;font-size:11px">
+                        ${fmtINR(s.totalCost)}<br>
+                        <span style="color:var(--gray-500)">${soldB}/${s.bundles} sold · ${remB} left${s.returnBundles?' · Ret:'+s.returnBundles:''}</span>
+                    </span>
+                </div>`;
+            }).join('')}
+            <div class="report-row"><span>Total Stock Cost</span><span class="rv">${fmtINR(monthStocks.reduce((a,s)=>a+(s.totalCost||0),0))}</span></div>
+            ` : ''}
+
+            ${totalExpenses ? `
+            <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.4px;margin:10px 0 6px;border-top:1px solid var(--gray-100);padding-top:10px">Monthly Expenses</div>
+            ${totalRent?`<div class="report-row"><span>&#127968; Shop Rent</span><span class="rv">${fmtINR(totalRent)}</span></div>`:''}
+            ${totalPetrol?`<div class="report-row"><span>&#9981; Petrol / Travel</span><span class="rv">${fmtINR(totalPetrol)}</span></div>`:''}
+            ${totalElec?`<div class="report-row"><span>&#9889; Electricity Bill</span><span class="rv">${fmtINR(totalElec)}</span></div>`:''}
+            ${totalOther?`<div class="report-row"><span>&#128179; Other Expenses</span><span class="rv">${fmtINR(totalOther)}</span></div>`:''}
+            <div class="report-row"><span><b>Total Expenses</b></span><span class="rv" style="color:var(--warning)">${fmtINR(totalExpenses)}</span></div>
+            ` : ''}
+
+            ${totalSavings ? `
+            <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.4px;margin:10px 0 6px;border-top:1px solid var(--gray-100);padding-top:10px">Savings</div>
+            <div class="report-row"><span>&#128176; Savings This Month</span><span class="rv" style="color:var(--success);font-weight:800">${fmtINR(totalSavings)}</span></div>
+            ` : ''}
         </div>`;
     }).join('');
-
-    // Stock summary
-    if (stocks.length > 0) {
-        const totalStockCost = stocks.reduce((a,s)=>a+(s.totalCost||0),0);
-        const totalTransport = stocks.reduce((a,s)=>a+(s.transportCost||0),0);
-        html += `<div class="report-card"><h3>&#127981; Stock Purchase Summary</h3>`;
-        stocks.forEach(s => {
-            html += `<div class="report-row"><span>Stock ${s.stockNumber} &nbsp;<small style="color:var(--gray-500)">${s.source}</small></span><span class="rv">${fmtINR(s.totalCost)} &nbsp;&#183;&nbsp; ${s.bundles} bundles</span></div>`;
-        });
-        html += `<div class="report-row" style="margin-top:4px"><span>Total Stock Cost</span><span class="rv">${fmtINR(totalStockCost)}</span></div>`;
-        html += `<div class="report-row"><span>Total Transport</span><span class="rv">${fmtINR(totalTransport)}</span></div>`;
-        html += `</div>`;
-    }
 
     el.innerHTML = html;
 }
@@ -1271,7 +1680,14 @@ function esc(str) {
 }
 
 // ── LOGIN ────────────────────────────────────────────────────
-const APP_PASSWORD = 'kanagarla123'; // Change this to your own password
+const APP_PASSWORD = 'mdh@1210'; // Change this to your own password
+
+function togglePw() {
+    const inp = document.getElementById('login-password');
+    const btn = document.getElementById('login-toggle-btn');
+    if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+    else { inp.type = 'password'; btn.textContent = '👁️'; }
+}
 
 function doLogin() {
     const input = document.getElementById('login-password').value;
