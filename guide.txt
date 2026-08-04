@@ -1,0 +1,600 @@
+================================================================
+   MANJUNADHA DISPOSABLE HUB — BUSINESS MANAGER GUIDE
+   Written for: Kanagarla / Manjunadha Disposable Hub
+================================================================
+
+
+----------------------------------------------------------------
+SECTION 1: WHAT IS THIS APP?
+----------------------------------------------------------------
+
+This is a web app built for your paper plate business to replace
+phone notes. It helps you track:
+
+  - Customers (name, phone, location, address, map link, rate)
+  - Daily Sales (bundles sold, to whom, amount, paid/pending)
+  - Stock Purchases (stock number, source, cost, transport)
+  - Monthly Reports (revenue, pending, stock summary)
+
+Live Link: https://manikanagarla.github.io/plate-manager/
+
+This link works on any phone, tablet, or laptop.
+All data syncs instantly across all devices.
+
+
+----------------------------------------------------------------
+SECTION 2: WHAT IS GITHUB AND WHY WE USED IT
+----------------------------------------------------------------
+
+WHAT IS GITHUB?
+  GitHub is a free website where developers store and share code.
+  Think of it like Google Drive but specifically for code files.
+
+WHY WE USED IT:
+  1. To store the app's code (index.html file)
+  2. To get a FREE live link using "GitHub Pages"
+  3. No server cost, no hosting cost — completely free
+
+HOW IT WORKS:
+  Your code (index.html)
+       |
+       | uploaded to
+       v
+  GitHub Repo (github.com/ManiKanagarla/plate-manager)
+       |
+       | served as website via GitHub Pages
+       v
+  Live Link (manikanagarla.github.io/plate-manager/)
+
+YOUR GITHUB DETAILS:
+  Username  : ManiKanagarla
+  Repo Name : plate-manager
+  Repo Link : https://github.com/ManiKanagarla/plate-manager
+  Live Link : https://manikanagarla.github.io/plate-manager/
+
+
+HOW TO GET LIVE LINK (Step by Step):
+  Step 1 - Create a GitHub account at github.com
+  Step 2 - Create a new repository (repo = folder for code)
+  Step 3 - Upload your code file (index.html) to the repo
+  Step 4 - Go to repo Settings > Pages
+  Step 5 - Set Source to "Deploy from a branch" > main > Save
+  Step 6 - Wait 1-2 minutes
+  Step 7 - Your live link appears as:
+           https://YOUR-USERNAME.github.io/REPO-NAME/
+
+HOW TO UPDATE THE APP IN FUTURE:
+  If any changes are made to index.html, run in terminal:
+
+    cd /mnt/d/business-project
+    git add index.html
+    git commit -m "describe what changed"
+    git push
+
+  GitHub Pages will automatically update the live link within
+  1-2 minutes.
+
+
+----------------------------------------------------------------
+SECTION 3: WHAT IS FIREBASE AND WHY WE USED IT
+----------------------------------------------------------------
+
+WHAT IS FIREBASE?
+  Firebase is Google's free database service.
+  It stores your app's data (customers, sales, stock) safely
+  on Google's servers — so data is never lost.
+
+WHY NOT JUST SAVE IN THE BROWSER?
+  Browsers have something called "localStorage" which saves
+  data on one device only. Problems with that:
+    - Data is lost if browser cache is cleared
+    - Data doesn't sync to other phones/laptops
+    - Not a real database — just temporary storage
+
+  Firebase solves ALL of these problems.
+
+HOW FIREBASE WORKS:
+  Your App (browser)
+       |
+       | when you add a customer / sale / stock
+       v
+  Firebase Firestore (Google's Database Server)
+       |
+       | instantly syncs to
+       v
+  All other devices using the same live link
+
+  So if your friend adds a sale on his phone, you can see it
+  immediately on your laptop — in real time.
+
+FIREBASE PLAN WE ARE USING:
+  Plan   : Spark (Free Plan)
+  Cost   : Rs. 0 / month — completely free
+  Limits : 50,000 reads per day
+            20,000 writes per day
+            1 GB storage
+
+  For a small business with daily use, these limits are
+  MORE than enough. A typical day might use 200-300 reads.
+
+YOUR FIREBASE DETAILS:
+  Google Account  : (your Gmail used for Firebase)
+  Project Name    : disposable business
+  Project ID      : disposable-business-559f2
+  Database Type   : Firestore (cloud database)
+  Firebase Console: https://console.firebase.google.com/
+
+
+----------------------------------------------------------------
+SECTION 4: WHAT IS THE FIREBASE CONFIG CODE
+----------------------------------------------------------------
+
+When we open the app, it needs to know WHICH Firebase database
+to connect to. That's what the config code does.
+
+THE CONFIG CODE (inside index.html):
+
+  const firebaseConfig = {
+      apiKey: "AIzaSyCDtlkYRdas8mURw3OmQRqBG-M2TQZYs6c",
+      authDomain: "disposable-business-559f2.firebaseapp.com",
+      projectId: "disposable-business-559f2",
+      storageBucket: "disposable-business-559f2.firebasestorage.app",
+      messagingSenderId: "345880664024",
+      appId: "1:345880664024:web:fa0f173bd03d5ba15bc4ad"
+  };
+
+WHAT EACH LINE MEANS:
+
+  apiKey            -> Password to access your Firebase project
+  authDomain        -> For login/authentication (future use)
+  projectId         -> Your unique Firebase project name
+  storageBucket     -> For storing files (future use)
+  messagingSenderId -> For push notifications (future use)
+  appId             -> ID of your registered web app
+
+THINK OF IT LIKE THIS:
+  Config code = Address + Key to your database locker
+  Without it  = App has nowhere to save data
+
+
+WITH CONFIG vs WITHOUT CONFIG:
+  -------------------------------------------------------
+  Feature                  With Config    Without Config
+  -------------------------------------------------------
+  Data saved permanently   YES            NO
+  Works on 2 phones        YES            NO
+  Data syncs all devices   YES            NO
+  Data safe if lost phone  YES            NO
+  Works offline            Partial        Yes (no save)
+  Monthly cost             Rs. 0          Rs. 0
+  -------------------------------------------------------
+
+
+----------------------------------------------------------------
+SECTION 5: HOW THE APP IS ORGANIZED
+----------------------------------------------------------------
+
+The entire app is ONE file: index.html
+This file contains:
+  - Design (CSS) — colors, layout, buttons
+  - Structure (HTML) — pages, forms, modals
+  - Logic (JavaScript) — saving, loading, calculating
+  - Firebase connection — reads and writes to database
+
+The app has 5 sections (bottom navigation):
+
+  1. HOME (Dashboard)
+     - Today's bundles sold
+     - This month's total bundles
+     - Pending amount to collect
+     - Total customers
+     - Current stock status
+     - Recent 5 sales
+
+  2. CUSTOMERS
+     - Add new customer
+     - View customer details
+     - Edit / Delete customer
+     - See total sales per customer
+     - See pending per customer
+
+  3. SALES
+     - Add daily sale
+     - Customer auto-fills rate per bundle
+     - Total amount auto-calculates
+     - Mark as Paid / Pending / Partial
+     - Payment mode: Cash / Phone Pay / UPI / Bank
+     - Filter: All / Pending / Paid / Today / This Month
+
+  4. STOCK PURCHASE
+     - Add each stock (Stock 1, Stock 2... can have 2 per month)
+     - Source location, supplier name
+     - Purchase cost + Transport cost (auto calculates total)
+     - Payment mode and payment date (how you paid supplier)
+     - Billing Month — controls which month this stock appears
+       under in reports (useful when stock arrives end of month
+       e.g. June 30 stock → set Billing Month = July)
+     - Return Bundles — optional, if you returned stock back
+     - Auto-tracks how many bundles sold from each stock
+     - Shows remaining bundles per stock
+
+     MONTHLY EXPENSES (separate section below stock list):
+     - One entry per month (not per stock)
+     - Shop Rent, Petrol / Travel, Electricity Bill
+     - Other Expenses + notes, Savings
+     - Edit / Delete per month
+
+  5. REPORTS
+     - Month-wise summary — everything in ONE card per month:
+       * Sales: transactions, bundles sold, revenue, collected, pending
+       * Stocks this month: each stock with cost, sold/remaining
+       * Monthly expenses: rent, petrol, electricity breakdown
+       * Savings for the month
+
+
+----------------------------------------------------------------
+SECTION 6: DATABASE STRUCTURE (HOW DATA IS STORED)
+----------------------------------------------------------------
+
+Firebase stores data in 4 "collections" (like folders):
+
+  CUSTOMERS collection:
+    - name
+    - phone
+    - location
+    - address
+    - mapLink (Google Maps URL)
+    - rate (price per bundle for this customer)
+    - notes
+    - createdAt / updatedAt
+
+  SALES collection:
+    - date
+    - customerId (links to customer)
+    - customerName
+    - location
+    - stockNumber (which stock it came from)
+    - bundles (how many bundles sold)
+    - rate (per bundle rate)
+    - total (auto calculated: bundles x rate)
+    - status (pending / paid / partial)
+    - paymentMode (cash / phonepay / upi / bank)
+    - paymentDate
+    - amountPaid
+    - notes
+    - createdAt / updatedAt
+
+  STOCKS collection:
+    - stockNumber (1, 2, 3... 8, 9...)
+    - date (actual purchase / arrival date)
+    - billingMonth (e.g. "2026-07" — which month it shows in reports)
+    - source (where it came from)
+    - supplier (supplier name)
+    - bundles (total bundles received)
+    - purchaseCost (how much paid for stock)
+    - transportCost (transport charges)
+    - totalCost (purchase + transport, auto calculated)
+    - paymentMode (cash / phonepay / upi / bank)
+    - paymentDate (when payment was made to supplier)
+    - returnBundles (how many bundles returned, optional)
+    - notes
+    - createdAt / updatedAt
+
+  EXPENSES collection (monthly expenses — one entry per month):
+    - month (e.g. "2026-07")
+    - rent (shop rent amount)
+    - petrol (petrol / travel cost)
+    - electricity (electricity bill amount)
+    - other (other expenses amount)
+    - otherNotes (description of other expenses)
+    - savings (savings amount for the month)
+    - notes
+    - createdAt / updatedAt
+
+
+----------------------------------------------------------------
+SECTION 7: WHERE IS YOUR DATA STORED?
+----------------------------------------------------------------
+
+Every time you add or update anything in the app — a customer,
+a sale, or a stock entry — it is immediately saved to Firebase
+Firestore (Google's server). Nothing is stored on your phone
+or laptop.
+
+HOW TO VIEW YOUR STORED DATA:
+
+  Step 1 - Go to https://console.firebase.google.com/
+  Step 2 - Click your project "disposable business"
+  Step 3 - Click "Firestore Database" in the left sidebar
+  Step 4 - You will see 4 folders (collections):
+
+           Firestore Database
+           |
+           +-- customers/     <- all customer records
+           |
+           +-- sales/         <- all daily sale records
+           |
+           +-- stocks/        <- all stock purchase records
+           |
+           +-- expenses/      <- monthly expenses (one per month)
+
+  Step 5 - Click any folder to see all records inside
+  Step 6 - Click any single record to see all its fields
+
+WHAT A STORED CUSTOMER LOOKS LIKE IN FIREBASE:
+
+  customers/
+    xK92mNpQr7...  (auto ID given by Firebase)
+      |-- name        : "Ramesh Traders"
+      |-- phone       : "9876543210"
+      |-- location    : "Chennai"
+      |-- rate        : 850
+      |-- address     : "Shop 4, Anna Nagar"
+      |-- mapLink     : "https://maps.google.com/..."
+      +-- createdAt   : "2026-07-02T10:30:00Z"
+
+WHAT A STORED SALE LOOKS LIKE IN FIREBASE:
+
+  sales/
+    aB34kLmN9p...  (auto ID)
+      |-- date        : "2026-07-02"
+      |-- customerName: "Ramesh Traders"
+      |-- stockNumber : 8
+      |-- bundles     : 10
+      |-- rate        : 850
+      |-- total       : 8500
+      |-- status      : "paid"
+      |-- paymentMode : "cash"
+      |-- paymentDate : "2026-07-02"
+      +-- amountPaid  : 8500
+
+WHAT A STORED STOCK LOOKS LIKE IN FIREBASE:
+
+  stocks/
+    cD56pQrS2w...  (auto ID)
+      |-- stockNumber  : 8
+      |-- date         : "2026-06-30"
+      |-- billingMonth : "2026-07"
+      |-- source       : "Hyderabad"
+      |-- supplier     : "XYZ Supplier"
+      |-- bundles      : 500
+      |-- purchaseCost : 400000
+      |-- transportCost: 5000
+      |-- totalCost    : 405000
+      |-- paymentMode  : "cash"
+      |-- paymentDate  : "2026-06-30"
+      +-- returnBundles: 0
+
+WHAT A STORED MONTHLY EXPENSE LOOKS LIKE IN FIREBASE:
+
+  expenses/
+    eF78xYzA3b...  (auto ID)
+      |-- month        : "2026-07"
+      |-- rent         : 5000
+      |-- petrol       : 2000
+      |-- electricity  : 1200
+      |-- other        : 0
+      |-- otherNotes   : ""
+      |-- savings      : 15000
+      +-- notes        : ""
+
+COMPLETE DATA FLOW:
+
+  You fill a form on the app
+          |
+          v
+  Firebase Firestore (Google Server - stored permanently)
+          |
+          v
+  Visible in Firebase Console (like a spreadsheet)
+          |
+          v
+  Syncs to all devices instantly (phone 1, phone 2, laptop)
+
+KEY FACTS ABOUT YOUR DATA:
+
+  Where is data stored?       : Google's server (Firebase)
+  Stored on your phone?       : No
+  Stored on your laptop?      : No
+  Safe if phone is lost?      : Yes — data is on Google server
+  Safe if laptop breaks?      : Yes — data is on Google server
+  Who can see the data?       : Anyone with your live link
+  Can data be deleted?        : Only from the app or Firebase Console
+  Can you export data?        : Yes — from Firebase Console
+
+HOW TO EXPORT DATA (backup):
+  1. Go to Firebase Console > Firestore Database
+  2. Click the 3-dot menu (top right)
+  3. Select "Export" to download all data
+  OR
+  Simply view each collection and note down records manually.
+
+
+----------------------------------------------------------------
+SECTION 8: IMPORTANT ACCOUNTS & CREDENTIALS
+----------------------------------------------------------------
+
+GITHUB:
+  Website  : github.com
+  Username : ManiKanagarla
+  Repo     : plate-manager
+
+FIREBASE:
+  Website  : console.firebase.google.com
+  Project  : disposable-business-559f2
+  Plan     : Free (Spark)
+
+IMPORTANT - KEEP THESE PRIVATE:
+  - GitHub Personal Access Token (ghp_...)
+  - Firebase API Key
+  - Do not share these publicly or on social media
+
+
+----------------------------------------------------------------
+SECTION 9: FUTURE UPDATES / MAINTENANCE
+----------------------------------------------------------------
+
+FIREBASE SECURITY RULES (30 days from setup):
+  Firebase test mode expires in 30 days. After that:
+    1. Go to Firebase Console > Firestore Database > Rules
+    2. Replace the existing rules with:
+
+       rules_version = '2';
+       service cloud.firestore {
+         match /databases/{database}/documents {
+           match /{document=**} {
+             allow read, write: if true;
+           }
+         }
+       }
+
+    3. Click Publish
+  This keeps the app working without login.
+
+ADDING FEATURES / PUSHING CODE CHANGES:
+  Every time you change index.html, run these commands:
+
+    Step 1 - Open terminal and go to project folder:
+             cd /mnt/d/business-project
+
+    Step 2 - Stage the changed file:
+             git add index.html
+
+    Step 3 - Commit with a message describing what changed:
+             git commit -m "describe what you changed"
+
+    Step 4 - Push to GitHub:
+             git push
+
+    Step 5 - Wait 1-2 minutes
+             Live link updates automatically.
+
+  EXAMPLE (if you changed app colors):
+    cd /mnt/d/business-project
+    git add index.html
+    git commit -m "changed app color to green"
+    git push
+
+  WHICH BRANCH TO PUSH TO:
+    - Your branch is "main" (not master)
+    - Just run: git push   (no need to type git push origin main)
+    - It is already set up to push to main automatically
+
+  DOES IT AUTO DEPLOY TO LIVE LINK?
+    - YES — completely automatic. No manual steps needed.
+    - Flow after git push:
+
+        git push
+            |
+            v
+        Code goes to GitHub repo
+            |
+            v
+        GitHub Pages detects change automatically
+            |
+            v
+        Builds and deploys new version
+            |
+            v
+        Live link is updated (1-2 minutes)
+
+    - You NEVER need to do anything on GitHub after pushing
+    - Just push, wait 1-2 minutes, refresh live link — done
+
+  IMPORTANT:
+    - Always write a meaningful message in git commit
+    - git push needs internet connection
+    - If push asks for login, use token (ghp_...) as password
+    - After push, refresh live link after 1-2 minutes to see changes
+
+SHARING THE LIVE LINK:
+  Just send this link to anyone who needs to use the app:
+  https://manikanagarla.github.io/plate-manager/
+
+  Works on any browser — Chrome, Safari, Firefox.
+  Works on Android and iPhone.
+  No app download needed.
+
+
+----------------------------------------------------------------
+SECTION 10: LOGIN & PASSWORD PROTECTION
+----------------------------------------------------------------
+
+The app now has a login screen. Anyone who opens the link
+will see a password screen first — they cannot access any data
+without the correct password.
+
+HOW IT WORKS:
+  - Open the live link
+  - A login screen appears (blue background, password box)
+  - Enter the correct password → app opens
+  - Wrong password → error shown, try again
+  - Once logged in, it stays logged in for that browser session
+    (no need to re-enter when switching tabs)
+  - Closing the browser/tab logs you out automatically
+
+LOGOUT:
+  - There is a "Logout" button in the top header (top right)
+  - Tap it to go back to the login screen
+
+CURRENT PASSWORD:
+  kanagarla123
+
+HOW TO CHANGE THE PASSWORD:
+  Step 1 - Open: /mnt/d/business-project/index.html
+  Step 2 - Find this line (around line 1274):
+
+           const APP_PASSWORD = 'kanagarla123';
+
+  Step 3 - Replace kanagarla123 with your new password
+  Step 4 - Save the file and push to GitHub:
+
+           git add index.html
+           git commit -m "changed app password"
+           git push origin main
+
+  Step 5 - Wait 1-2 minutes, live link updates automatically
+
+IMPORTANT:
+  - Do NOT forget your password — it is only stored in index.html
+  - Share the password only with trusted people (family/staff)
+  - Do NOT share the live link publicly anymore — keep it private
+
+
+----------------------------------------------------------------
+SECTION 11: PUSH COMMAND REFERENCE
+----------------------------------------------------------------
+
+CORRECT PUSH COMMAND (always use this):
+
+  git push origin main
+
+If it asks for username: ManiKanagarla
+If it asks for password: paste your ghp_... token (not your GitHub password)
+
+IF YOU GET "Permission denied" ERROR:
+  Run this first to fix the account:
+
+  git remote set-url origin https://ManiKanagarla@github.com/ManiKanagarla/plate-manager.git
+
+  Then run: git push origin main
+
+
+----------------------------------------------------------------
+SECTION 12: QUICK REFERENCE
+----------------------------------------------------------------
+
+Live App Link  : https://manikanagarla.github.io/plate-manager/
+GitHub Repo    : https://github.com/ManiKanagarla/plate-manager
+Firebase       : https://console.firebase.google.com/
+Project ID     : disposable-business-559f2
+App File       : /mnt/d/business-project/index.html
+App Password   : kanagarla123  (change anytime in index.html)
+
+For any issues or new features, share the problem and the
+code can be updated and redeployed.
+
+
+================================================================
+   END OF GUIDE
+================================================================

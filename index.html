@@ -230,6 +230,36 @@
         }
         .chip.active { background: var(--gradient-primary); border-color: transparent; color: white; box-shadow: 0 4px 12px -4px rgba(79,70,229,0.5); }
 
+        /* SEARCH BAR */
+        .search-bar { position: relative; margin-bottom: 10px; }
+        .search-bar input {
+            width: 100%; padding: 10px 14px 10px 36px;
+            border: 1.5px solid var(--gray-200); border-radius: 999px;
+            font-size: 13px; outline: none; font-family: inherit;
+            background: white; color: var(--gray-900); transition: all 0.15s;
+        }
+        .search-bar input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(79,70,229,0.1); }
+        .search-bar .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 14px; pointer-events: none; }
+        .filter-row { display: flex; gap: 7px; margin-bottom: 10px; }
+        .filter-select {
+            flex: 1; min-width: 0; padding: 8px 10px;
+            border: 1.5px solid var(--gray-200); border-radius: 10px;
+            font-size: 12px; outline: none; font-family: inherit;
+            background: white; color: var(--gray-700); font-weight: 600;
+            transition: border-color 0.15s;
+        }
+        .filter-select:focus { border-color: var(--primary); }
+        .filter-select.active-filter { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+        .date-filter-row { display: flex; gap: 7px; margin-bottom: 10px; align-items: center; }
+        .date-filter-row input[type=date] {
+            flex: 1; padding: 8px 10px;
+            border: 1.5px solid var(--gray-200); border-radius: 10px;
+            font-size: 12px; outline: none; font-family: inherit;
+            background: white; color: var(--gray-700); transition: border-color 0.15s;
+        }
+        .date-filter-row input[type=date]:focus { border-color: var(--primary); }
+        .date-filter-row .date-sep { font-size: 11px; color: var(--gray-500); white-space: nowrap; font-weight: 600; }
+
         /* MODAL */
         .modal-overlay {
             display: none; position: fixed; inset: 0;
@@ -529,6 +559,15 @@
         <h2>Customers</h2>
         <button class="btn btn-primary btn-sm" onclick="openAddCustomer()">+ Add</button>
     </div>
+    <div class="search-bar">
+        <span class="search-icon">&#128269;</span>
+        <input type="text" id="customer-search" placeholder="Search by name or phone..." oninput="renderCustomers()">
+    </div>
+    <div class="filter-bar" id="customer-filter-bar">
+        <button class="chip active" onclick="setCustFilter('all',this)">All</button>
+        <button class="chip" onclick="setCustFilter('pending',this)">Pending Only</button>
+    </div>
+    <div id="customer-location-bar"></div>
     <div id="customers-list">
         <div class="empty"><div class="eicon">&#128101;</div><p>No customers yet</p></div>
     </div>
@@ -540,13 +579,40 @@
         <h2>Sales</h2>
         <button class="btn btn-primary btn-sm" onclick="openAddSale()">+ Add Sale</button>
     </div>
-    <div class="filter-bar">
+    <div class="search-bar">
+        <span class="search-icon">&#128269;</span>
+        <input type="text" id="sale-search" placeholder="Search by customer name..." oninput="renderSales()">
+    </div>
+    <div class="filter-bar" id="sales-status-bar">
         <button class="chip active" onclick="setFilter('all',this)">All</button>
         <button class="chip" onclick="setFilter('pending',this)">Pending</button>
         <button class="chip" onclick="setFilter('paid',this)">Paid</button>
         <button class="chip" onclick="setFilter('partial',this)">Partial</button>
         <button class="chip" onclick="setFilter('today',this)">Today</button>
         <button class="chip" onclick="setFilter('month',this)">This Month</button>
+    </div>
+    <div class="filter-row">
+        <select class="filter-select" id="sale-filter-customer" onchange="renderSales()">
+            <option value="">All Customers</option>
+        </select>
+        <select class="filter-select" id="sale-filter-stock" onchange="renderSales()">
+            <option value="">All Stocks</option>
+        </select>
+    </div>
+    <div class="filter-row">
+        <select class="filter-select" id="sale-filter-mode" onchange="renderSales()">
+            <option value="">All Payment Modes</option>
+            <option value="cash">Cash</option>
+            <option value="phonepay">Phone Pay</option>
+            <option value="upi">UPI</option>
+            <option value="bank">Bank Transfer</option>
+        </select>
+    </div>
+    <div class="date-filter-row">
+        <input type="date" id="sale-filter-from" onchange="renderSales()" title="From date">
+        <span class="date-sep">to</span>
+        <input type="date" id="sale-filter-to" onchange="renderSales()" title="To date">
+        <button class="btn-icon" onclick="clearDateFilter()" title="Clear dates" style="flex-shrink:0">&#x2715;</button>
     </div>
     <div id="sales-summary" style="margin-bottom:10px;"></div>
     <div id="sales-list">
@@ -559,6 +625,14 @@
     <div class="section-header">
         <h2>Stock Purchase</h2>
         <button class="btn btn-primary btn-sm" onclick="openAddStock()">+ Add Stock</button>
+    </div>
+    <div class="filter-row">
+        <select class="filter-select" id="stock-filter-month" onchange="renderStocks()">
+            <option value="">All Months</option>
+        </select>
+        <select class="filter-select" id="stock-filter-source" onchange="renderStocks()">
+            <option value="">All Sources</option>
+        </select>
     </div>
     <div id="stock-list">
         <div class="empty"><div class="eicon">&#127981;</div><p>No stock records yet</p></div>
@@ -578,6 +652,7 @@
     <div class="section-header">
         <h2>Monthly Reports</h2>
     </div>
+    <div id="top-customers-card"></div>
     <div id="reports-content">
         <div class="empty"><div class="eicon">&#128202;</div><p>No data yet</p></div>
     </div>
@@ -921,6 +996,8 @@ let sales = [];
 let stocks = [];
 let expenses = [];
 let salesFilter = 'all';
+let custFilter = 'all';
+let custLocationFilter = '';
 let deleteHandler = null;
 let selectedCustomerId = null;
 let selectedSaleId = null;
@@ -1065,11 +1142,41 @@ function renderDashboard() {
 function renderCustomers() {
     const el = document.getElementById('customers-list');
     if (!el) return;
-    if (customers.length === 0) {
-        el.innerHTML = '<div class="empty"><div class="eicon">&#128101;</div><p>No customers yet.<br>Tap + Add to get started.</p></div>';
+
+    // Build location chips dynamically
+    const locBar = document.getElementById('customer-location-bar');
+    if (locBar) {
+        const locs = [...new Set(customers.map(c => c.location).filter(Boolean))].sort();
+        if (locs.length > 0) {
+            locBar.innerHTML = '<div class="filter-bar">' +
+                `<button class="chip${custLocationFilter===''?' active':''}" onclick="setCustLocation('',this)">All Areas</button>` +
+                locs.map(l => `<button class="chip${custLocationFilter===l?' active':''}" onclick="setCustLocation('${esc(l)}',this)">${esc(l)}</button>`).join('') +
+                '</div>';
+        } else {
+            locBar.innerHTML = '';
+        }
+    }
+
+    const search = (document.getElementById('customer-search')?.value || '').toLowerCase().trim();
+    let list = customers;
+
+    if (search) list = list.filter(c => (c.name||'').toLowerCase().includes(search) || (c.phone||'').includes(search));
+    if (custLocationFilter) list = list.filter(c => c.location === custLocationFilter);
+    if (custFilter === 'pending') {
+        const pendingIds = new Set(sales.filter(s => s.status==='pending'||s.status==='partial').map(s => s.customerId));
+        list = list.filter(c => pendingIds.has(c.id));
+    }
+
+    if (list.length === 0) {
+        el.innerHTML = '<div class="empty"><div class="eicon">&#128101;</div><p>No customers found</p></div>';
         return;
     }
-    el.innerHTML = customers.map(c => `
+    el.innerHTML = list.map(c => {
+        const pendingAmt = sales.filter(s=>s.customerId===c.id&&(s.status==='pending'||s.status==='partial')).reduce((a,s)=>{
+            if(s.status==='partial') return a+Math.max(0,(s.total||0)-(s.amountPaid||0));
+            return a+(s.total||0);
+        },0);
+        return `
         <div class="item-card" onclick="viewCustomer('${c.id}')">
             <div style="display:flex;justify-content:space-between;align-items:flex-start">
                 <div class="item-name">${esc(c.name)}</div>
@@ -1077,8 +1184,9 @@ function renderCustomers() {
             </div>
             <div class="item-sub">&#128222; ${esc(c.phone)} &nbsp;&#183;&nbsp; &#128205; ${esc(c.location)}</div>
             ${c.address ? `<div class="item-sub" style="margin-top:2px">${esc(c.address)}</div>` : ''}
-        </div>
-    `).join('');
+            ${pendingAmt > 0 ? `<div class="item-sub" style="margin-top:4px;color:var(--danger);font-weight:700">Pending: &#8377;${pendingAmt.toLocaleString('en-IN')}</div>` : ''}
+        </div>`;
+    }).join('');
 }
 
 function fillCustomerDropdown() {
@@ -1088,6 +1196,14 @@ function fillCustomerDropdown() {
     sel.innerHTML = '<option value="">-- Select Customer --</option>' +
         customers.map(c => `<option value="${c.id}" data-rate="${c.rate}" data-loc="${esc(c.location)}" data-name="${esc(c.name)}">${esc(c.name)} — ${esc(c.location)}</option>`).join('');
     sel.value = cur;
+
+    const fsel = document.getElementById('sale-filter-customer');
+    if (fsel) {
+        const fcur = fsel.value;
+        fsel.innerHTML = '<option value="">All Customers</option>' +
+            customers.map(c => `<option value="${c.id}">${esc(c.name)} — ${esc(c.location)}</option>`).join('');
+        fsel.value = fcur;
+    }
 }
 
 function openAddCustomer(c = null) {
@@ -1209,18 +1325,46 @@ function renderSales() {
     const month = monthStr();
 
     let filtered = sales;
-    if (salesFilter === 'pending') filtered = sales.filter(s => s.status === 'pending');
-    else if (salesFilter === 'partial') filtered = sales.filter(s => s.status === 'partial');
-    else if (salesFilter === 'paid') filtered = sales.filter(s => s.status === 'paid');
-    else if (salesFilter === 'today') filtered = sales.filter(s => s.date === today);
-    else if (salesFilter === 'month') filtered = sales.filter(s => s.date && s.date.startsWith(month));
+
+    // Status filter
+    if (salesFilter === 'pending') filtered = filtered.filter(s => s.status === 'pending');
+    else if (salesFilter === 'partial') filtered = filtered.filter(s => s.status === 'partial');
+    else if (salesFilter === 'paid') filtered = filtered.filter(s => s.status === 'paid');
+    else if (salesFilter === 'today') filtered = filtered.filter(s => s.date === today);
+    else if (salesFilter === 'month') filtered = filtered.filter(s => s.date && s.date.startsWith(month));
+
+    // Search by customer name
+    const search = (document.getElementById('sale-search')?.value || '').toLowerCase().trim();
+    if (search) filtered = filtered.filter(s => (s.customerName||'').toLowerCase().includes(search));
+
+    // Customer filter
+    const custId = document.getElementById('sale-filter-customer')?.value;
+    if (custId) filtered = filtered.filter(s => s.customerId === custId);
+
+    // Stock filter
+    const stockNum = document.getElementById('sale-filter-stock')?.value;
+    if (stockNum) filtered = filtered.filter(s => String(s.stockNumber) === stockNum);
+
+    // Payment mode filter
+    const payMode = document.getElementById('sale-filter-mode')?.value;
+    if (payMode) filtered = filtered.filter(s => s.paymentMode === payMode);
+
+    // Date range filter
+    const fromDate = document.getElementById('sale-filter-from')?.value;
+    const toDate = document.getElementById('sale-filter-to')?.value;
+    if (fromDate) filtered = filtered.filter(s => s.date >= fromDate);
+    if (toDate) filtered = filtered.filter(s => s.date <= toDate);
 
     // Summary bar
     const sumEl = document.getElementById('sales-summary');
     if (filtered.length > 0) {
         const bundles = filtered.reduce((a,s)=>a+(s.bundles||0),0);
         const total = filtered.reduce((a,s)=>a+(s.total||0),0);
-        sumEl.innerHTML = `<div style="background:var(--primary-light);border-radius:10px;padding:8px 12px;font-size:12px;color:var(--primary);font-weight:600">${filtered.length} sales &nbsp;&#183;&nbsp; ${bundles} bundles &nbsp;&#183;&nbsp; ${fmtINR(total)} total</div>`;
+        const pendingAmt = filtered.filter(s=>s.status==='pending'||s.status==='partial').reduce((a,s)=>{
+            if(s.status==='partial') return a+Math.max(0,(s.total||0)-(s.amountPaid||0));
+            return a+(s.total||0);
+        },0);
+        sumEl.innerHTML = `<div style="background:var(--primary-light);border-radius:10px;padding:8px 12px;font-size:12px;color:var(--primary);font-weight:600">${filtered.length} sales &nbsp;&#183;&nbsp; ${bundles} bundles &nbsp;&#183;&nbsp; ${fmtINR(total)} total${pendingAmt>0?' &nbsp;&#183;&nbsp; <span style="color:var(--danger)">'+fmtINR(pendingAmt)+' pending</span>':''}</div>`;
     } else {
         sumEl.innerHTML = '';
     }
@@ -1234,7 +1378,7 @@ function renderSales() {
 
 function setFilter(f, el) {
     salesFilter = f;
-    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('#sales-status-bar .chip').forEach(c => c.classList.remove('active'));
     el.classList.add('active');
     renderSales();
 }
@@ -1246,6 +1390,36 @@ function fillStockDropdown() {
     sel.innerHTML = '<option value="">-- Select Stock --</option>' +
         stocks.map(s => `<option value="${s.stockNumber}">Stock ${s.stockNumber} (${s.source})</option>`).join('');
     sel.value = cur;
+
+    const fsel = document.getElementById('sale-filter-stock');
+    if (fsel) {
+        const fcur = fsel.value;
+        fsel.innerHTML = '<option value="">All Stocks</option>' +
+            stocks.map(s => `<option value="${s.stockNumber}">Stock ${s.stockNumber}</option>`).join('');
+        fsel.value = fcur;
+    }
+
+    const msel = document.getElementById('stock-filter-month');
+    if (msel) {
+        const mcur = msel.value;
+        const months = [...new Set(stocks.map(s => s.billingMonth || s.date?.substring(0,7)).filter(Boolean))].sort().reverse();
+        msel.innerHTML = '<option value="">All Months</option>' +
+            months.map(m => {
+                const [yr, mn] = m.split('-');
+                const label = new Date(yr, mn-1, 1).toLocaleString('en-IN', {month:'long', year:'numeric'});
+                return `<option value="${m}">${label}</option>`;
+            }).join('');
+        msel.value = mcur;
+    }
+
+    const ssel = document.getElementById('stock-filter-source');
+    if (ssel) {
+        const scur = ssel.value;
+        const sources = [...new Set(stocks.map(s => s.source).filter(Boolean))].sort();
+        ssel.innerHTML = '<option value="">All Sources</option>' +
+            sources.map(src => `<option value="${src}">${esc(src)}</option>`).join('');
+        ssel.value = scur;
+    }
 }
 
 function onCustomerChange() {
@@ -1395,11 +1569,18 @@ async function deleteSale(id) {
 function renderStocks() {
     const el = document.getElementById('stock-list');
     if (!el) return;
-    if (stocks.length === 0) {
-        el.innerHTML = '<div class="empty"><div class="eicon">&#127981;</div><p>No stock records yet</p></div>';
+
+    let list = stocks;
+    const monthFilter = document.getElementById('stock-filter-month')?.value;
+    if (monthFilter) list = list.filter(s => (s.billingMonth || s.date?.substring(0,7)) === monthFilter);
+    const sourceFilter = document.getElementById('stock-filter-source')?.value;
+    if (sourceFilter) list = list.filter(s => s.source === sourceFilter);
+
+    if (list.length === 0) {
+        el.innerHTML = '<div class="empty"><div class="eicon">&#127981;</div><p>No stock records found</p></div>';
         return;
     }
-    el.innerHTML = stocks.map(s => {
+    el.innerHTML = list.map(s => {
         const soldBundles = sales.filter(x=>x.stockNumber==s.stockNumber).reduce((a,x)=>a+(x.bundles||0),0);
         const remaining = (s.bundles||0) - soldBundles;
         return `
@@ -1590,6 +1771,7 @@ async function deleteExpense(id) {
 function renderReports() {
     const el = document.getElementById('reports-content');
     if (!el) return;
+    renderTopCustomers();
     if (sales.length === 0) {
         el.innerHTML = '<div class="empty"><div class="eicon">&#128202;</div><p>No data yet</p></div>';
         return;
@@ -1671,6 +1853,54 @@ function renderReports() {
     }).join('');
 
     el.innerHTML = html;
+}
+
+function setCustFilter(f, el) {
+    custFilter = f;
+    document.querySelectorAll('#customer-filter-bar .chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    renderCustomers();
+}
+
+function setCustLocation(loc, el) {
+    custLocationFilter = loc;
+    renderCustomers();
+}
+
+function clearDateFilter() {
+    document.getElementById('sale-filter-from').value = '';
+    document.getElementById('sale-filter-to').value = '';
+    renderSales();
+}
+
+function renderTopCustomers() {
+    const el = document.getElementById('top-customers-card');
+    if (!el) return;
+    if (sales.length === 0) { el.innerHTML = ''; return; }
+
+    const byCustomer = {};
+    sales.forEach(s => {
+        if (!s.customerId) return;
+        if (!byCustomer[s.customerId]) byCustomer[s.customerId] = { name: s.customerName||'Unknown', bundles: 0, total: 0 };
+        byCustomer[s.customerId].bundles += (s.bundles||0);
+        byCustomer[s.customerId].total += (s.total||0);
+    });
+
+    const top = Object.values(byCustomer).sort((a,b) => b.bundles - a.bundles).slice(0,5);
+    if (top.length === 0) { el.innerHTML = ''; return; }
+
+    el.innerHTML = `
+    <div class="report-card" style="margin-bottom:12px">
+        <h3>&#127942; Top Customers (by Bundles)</h3>
+        ${top.map((c,i) => `
+        <div class="report-row">
+            <span>${i+1}. ${esc(c.name)}</span>
+            <span class="rv" style="text-align:right;font-size:12px">
+                ${c.bundles} bundles<br>
+                <span style="color:var(--gray-500)">${fmtINR(c.total)}</span>
+            </span>
+        </div>`).join('')}
+    </div>`;
 }
 
 // ── XSS SAFE ESCAPE ──────────────────────────────────────────
