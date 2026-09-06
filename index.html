@@ -969,6 +969,8 @@
 <!-- FIREBASE SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<!-- HTML2CANVAS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
 // ============================================================
@@ -1276,6 +1278,7 @@ function viewCustomer(id) {
             <div class="stat-card"><div class="stat-label">Collected</div><div class="stat-value" style="color:var(--success);font-size:16px">${fmtINR(totalRevenue)}</div></div>
             <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--danger);font-size:16px">${fmtINR(pendingAmt)}</div></div>
         </div>
+        <button class="btn btn-success btn-full" onclick="shareCustomerCard('${id}')" style="margin-bottom:8px;justify-content:center">&#128246; Share Payment Card</button>
         <div class="action-row">
             <button class="btn btn-outline btn-full" onclick="editSelectedCustomer()">Edit</button>
             <button class="btn btn-danger btn-full" onclick="deleteCustomer('${id}')">Delete</button>
@@ -1901,6 +1904,144 @@ function renderTopCustomers() {
             </span>
         </div>`).join('')}
     </div>`;
+}
+
+// ── SHARE PAYMENT CARD ───────────────────────────────────────
+async function shareCustomerCard(id) {
+    const c = customers.find(x => x.id === id);
+    if (!c) return;
+
+    const cSales = sales.filter(s => s.customerId === id);
+    const totalSalesAmt = cSales.reduce((a,s) => a + (s.total||0), 0);
+    const collected = cSales.filter(s=>s.status==='paid').reduce((a,s)=>a+(s.total||0),0)
+                    + cSales.filter(s=>s.status==='partial').reduce((a,s)=>a+(s.amountPaid||0),0);
+    const pendingAmt = cSales.filter(s=>s.status==='pending'||s.status==='partial').reduce((a,s)=>{
+        if(s.status==='partial') return a+Math.max(0,(s.total||0)-(s.amountPaid||0));
+        return a+(s.total||0);
+    },0);
+
+    const pendingSales = cSales
+        .filter(s=>s.status==='pending'||s.status==='partial')
+        .sort((a,b)=>a.date>b.date?1:-1);
+
+    const today = new Date();
+    const genDate = today.toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
+
+    const r = n => '\u20B9 ' + (n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const fd = s => { if(!s) return '\u2014'; const [y,m,d]=s.split('-'); return d+'-'+m+'-'+y; };
+
+    const pendingRowsHTML = pendingSales.length > 0 ? `
+        <div style="margin-top:14px">
+            <div style="background:#1e4d0a;color:#fff;padding:8px 12px;font-size:12px;font-weight:700;letter-spacing:1px">
+                &#128203; PENDING BILLS
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid #ddd;border-top:none">
+                <tr style="background:#f5f5f5">
+                    <th style="padding:7px 10px;text-align:left;font-weight:700;border-bottom:1px solid #ddd;color:#333">Date</th>
+                    <th style="padding:7px 10px;text-align:center;font-weight:700;border-bottom:1px solid #ddd;color:#333">Bundles</th>
+                    <th style="padding:7px 10px;text-align:right;font-weight:700;border-bottom:1px solid #ddd;color:#333">Amount</th>
+                </tr>
+                ${pendingSales.map(s=>`
+                <tr>
+                    <td style="padding:7px 10px;border-bottom:1px solid #eee;color:#333">${fd(s.date)}</td>
+                    <td style="padding:7px 10px;text-align:center;border-bottom:1px solid #eee;color:#333">${s.bundles} Bundles</td>
+                    <td style="padding:7px 10px;text-align:right;border-bottom:1px solid #eee;color:#c0392b;font-weight:700">${r(s.status==='partial'?Math.max(0,(s.total||0)-(s.amountPaid||0)):s.total)}</td>
+                </tr>`).join('')}
+            </table>
+        </div>` : '';
+
+    const cardEl = document.createElement('div');
+    cardEl.style.cssText = 'position:fixed;left:-9999px;top:0;z-index:-1;background:white;padding:4px';
+    cardEl.innerHTML = `
+    <div style="width:360px;background:#fff;font-family:Arial,Helvetica,sans-serif;padding:20px;border-radius:10px">
+        <div style="text-align:center;padding-bottom:12px;border-bottom:2px solid #c8a84b">
+            <div style="font-size:24px;font-weight:900;color:#1e4d0a;letter-spacing:1.5px">MANJUNADHA</div>
+            <div style="font-size:24px;font-weight:900;color:#1e4d0a;letter-spacing:1.5px">DISPOSABLE HUB</div>
+        </div>
+        <div style="margin-top:14px">
+            <div style="background:#1e4d0a;color:#fff;padding:8px 12px;font-size:12px;font-weight:700;letter-spacing:1px">&#128100; CUSTOMER DETAILS</div>
+            <div style="border:1px solid #ddd;border-top:none;padding:0 12px">
+                <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f0f0f0">
+                    <span>&#128100;</span>
+                    <span style="font-size:11px;color:#666;width:110px;flex-shrink:0">Customer Name</span>
+                    <span style="font-size:11px;color:#333;margin-right:4px">:</span>
+                    <span style="font-size:12px;font-weight:700;color:#1e4d0a">${c.name}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f0f0f0">
+                    <span>&#128222;</span>
+                    <span style="font-size:11px;color:#666;width:110px;flex-shrink:0">Phone Number</span>
+                    <span style="font-size:11px;color:#333;margin-right:4px">:</span>
+                    <span style="font-size:12px;font-weight:700;color:#333">+91 ${c.phone}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;padding:7px 0">
+                    <span>&#128205;</span>
+                    <span style="font-size:11px;color:#666;width:110px;flex-shrink:0">Location</span>
+                    <span style="font-size:11px;color:#333;margin-right:4px">:</span>
+                    <span style="font-size:12px;font-weight:700;color:#333">${c.location}</span>
+                </div>
+            </div>
+        </div>
+        <div style="margin-top:14px">
+            <div style="background:#1e4d0a;color:#fff;padding:8px 12px;font-size:12px;font-weight:700;letter-spacing:1px">&#128176; PAYMENT SUMMARY</div>
+            <div style="border:1px solid #ddd;border-top:none;padding:0 12px">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0">
+                    <div style="display:flex;align-items:center;gap:8px"><span>&#128722;</span><span style="font-size:12px;color:#333">Total Sales Amount</span></div>
+                    <span style="background:#1a7a1a;color:#fff;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:700">${r(totalSalesAmt)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0">
+                    <div style="display:flex;align-items:center;gap:8px"><span>&#9989;</span><span style="font-size:12px;color:#333">Amount Collected</span></div>
+                    <span style="background:#1a7a1a;color:#fff;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:700">${r(collected)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;background:#fff5f5;padding:8px 12px;margin:0 -12px">
+                    <div style="display:flex;align-items:center;gap:8px"><span>&#9200;</span><span style="font-size:12px;color:#c0392b;font-weight:700">Pending Amount</span></div>
+                    <span style="background:#c0392b;color:#fff;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:700">${r(pendingAmt)}</span>
+                </div>
+            </div>
+        </div>
+        ${pendingRowsHTML}
+        <div style="margin-top:14px;padding-top:10px;border-top:1px solid #ddd;display:flex;justify-content:space-between;align-items:center">
+            <div>
+                <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:0.5px">Generated On</div>
+                <div style="font-size:12px;font-weight:700;color:#333">${genDate}</div>
+            </div>
+            <div style="text-align:right">
+                <div style="font-size:11px;font-style:italic;color:#1e4d0a;font-weight:700">Manjunadha</div>
+                <div style="font-size:11px;font-style:italic;color:#1e4d0a;font-weight:700">Disposable Hub</div>
+            </div>
+        </div>
+    </div>`;
+
+    document.body.appendChild(cardEl);
+    showToast('Generating card...');
+
+    try {
+        const canvas = await html2canvas(cardEl.firstElementChild, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff'
+        });
+        document.body.removeChild(cardEl);
+
+        canvas.toBlob(async blob => {
+            const file = new File([blob], 'payment-card.png', { type: 'image/png' });
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({ files: [file], title: 'Payment Summary - ' + c.name });
+                } catch(e) {
+                    if (e.name !== 'AbortError') showToast('Share cancelled');
+                }
+            } else {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'payment-' + c.name.replace(/\s+/g,'-') + '.png';
+                a.click();
+                showToast('Image downloaded — share manually');
+            }
+        }, 'image/png');
+    } catch(err) {
+        if (cardEl.parentNode) document.body.removeChild(cardEl);
+        showToast('Error generating card');
+    }
 }
 
 // ── XSS SAFE ESCAPE ──────────────────────────────────────────
