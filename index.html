@@ -465,6 +465,18 @@
             transition: background 0.15s;
         }
         .btn-logout:hover { background: rgba(255,255,255,0.26); }
+
+        /* PLATE RATES */
+        .plate-rates-grid { display:flex; flex-direction:column; gap:6px; margin-top:4px; }
+        .plate-rate-row { display:flex; align-items:center; gap:10px; }
+        .plate-rate-row .prl { font-size:12px; font-weight:600; color:var(--gray-700); flex:1; }
+        .plate-rate-row input { width:110px; flex-shrink:0; padding:8px 10px; border:1.5px solid var(--gray-200); border-radius:8px; font-size:13px; outline:none; font-family:inherit; background:white; color:var(--gray-900); transition:border-color 0.15s; }
+        .plate-rate-row input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(79,70,229,0.1); }
+
+        /* SALE ITEM ROWS */
+        .sale-item-row { background:var(--gray-50); border:1px solid var(--gray-200); border-radius:var(--radius-sm); padding:10px; margin-bottom:8px; }
+        .sale-item-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+        .sale-item-header span { font-size:11px; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.5px; }
     </style>
 </head>
 <body>
@@ -607,6 +619,15 @@
             <option value="upi">UPI</option>
             <option value="bank">Bank Transfer</option>
         </select>
+        <select class="filter-select" id="sale-filter-plate" onchange="renderSales()">
+            <option value="">All Plate Types</option>
+            <option value="8_paper">8 inch Paper</option>
+            <option value="10_paper">10 inch Paper</option>
+            <option value="10_buffet">10 inch Buffet</option>
+            <option value="12_buffet_green">12 inch Buffet Green</option>
+            <option value="12_buffet_multi">12 inch Buffet Multi</option>
+            <option value="12_leaf">12 inch Leaf</option>
+        </select>
     </div>
     <div class="date-filter-row">
         <input type="date" id="sale-filter-from" onchange="renderSales()" title="From date">
@@ -695,14 +716,19 @@
                 <label>Phone Number *</label>
                 <input type="tel" id="c-phone" placeholder="10-digit number" required>
             </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>City / Location *</label>
-                    <input type="text" id="c-location" placeholder="City or area" required>
-                </div>
-                <div class="form-group">
-                    <label>Rate / Bundle (&#8377;) *</label>
-                    <input type="number" id="c-rate" placeholder="e.g. 850" required min="1">
+            <div class="form-group">
+                <label>City / Location *</label>
+                <input type="text" id="c-location" placeholder="City or area" required>
+            </div>
+            <div class="form-group">
+                <label>Rate per Bundle (&#8377;) — by Plate Type</label>
+                <div class="plate-rates-grid">
+                    <div class="plate-rate-row"><span class="prl">8 inch Paper</span><input type="number" id="c-rate-8_paper" placeholder="Rate" min="0"></div>
+                    <div class="plate-rate-row"><span class="prl">10 inch Paper</span><input type="number" id="c-rate-10_paper" placeholder="Rate" min="0"></div>
+                    <div class="plate-rate-row"><span class="prl">10 inch Buffet</span><input type="number" id="c-rate-10_buffet" placeholder="Rate" min="0"></div>
+                    <div class="plate-rate-row"><span class="prl">12 inch Buffet Green</span><input type="number" id="c-rate-12_buffet_green" placeholder="Rate" min="0"></div>
+                    <div class="plate-rate-row"><span class="prl">12 inch Buffet Multi</span><input type="number" id="c-rate-12_buffet_multi" placeholder="Rate" min="0"></div>
+                    <div class="plate-rate-row"><span class="prl">12 inch Leaf</span><input type="number" id="c-rate-12_leaf" placeholder="Rate" min="0"></div>
                 </div>
             </div>
             <div class="form-group">
@@ -760,16 +786,8 @@
                     <option value="">-- Select Stock --</option>
                 </select>
             </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Bundles *</label>
-                    <input type="number" id="s-bundles" placeholder="Count" required min="1" oninput="calcSaleTotal()">
-                </div>
-                <div class="form-group">
-                    <label>Rate / Bundle (&#8377;) *</label>
-                    <input type="number" id="s-rate" placeholder="Rate" required min="1" oninput="calcSaleTotal()">
-                </div>
-            </div>
+            <div id="sale-items-container"></div>
+            <button type="button" class="btn btn-outline btn-full" onclick="addSaleItem()" style="margin-bottom:14px">+ Add Plate Type</button>
             <div class="form-group">
                 <label>Total Amount (&#8377;)</label>
                 <input type="number" id="s-total" placeholder="Auto calculated" readonly>
@@ -992,6 +1010,16 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// ── PLATE TYPES ───────────────────────────────────────────────
+const PLATE_TYPES = [
+    { key: '8_paper',         label: '8 inch Paper',             size: '8',  type: 'Paper' },
+    { key: '10_paper',        label: '10 inch Paper',            size: '10', type: 'Paper' },
+    { key: '10_buffet',       label: '10 inch Buffet',           size: '10', type: 'Buffet' },
+    { key: '12_buffet_green', label: '12 inch Buffet Green',     size: '12', type: 'Buffet Green' },
+    { key: '12_buffet_multi', label: '12 inch Buffet Multicolor',size: '12', type: 'Buffet Multi' },
+    { key: '12_leaf',         label: '12 inch Leaf',             size: '12', type: 'Leaf' },
+];
+
 // ── STATE ────────────────────────────────────────────────────
 let customers = [];
 let sales = [];
@@ -1196,7 +1224,7 @@ function fillCustomerDropdown() {
     if (!sel) return;
     const cur = sel.value;
     sel.innerHTML = '<option value="">-- Select Customer --</option>' +
-        customers.map(c => `<option value="${c.id}" data-rate="${c.rate}" data-loc="${esc(c.location)}" data-name="${esc(c.name)}">${esc(c.name)} — ${esc(c.location)}</option>`).join('');
+        customers.map(c => `<option value="${c.id}" data-loc="${esc(c.location)}" data-name="${esc(c.name)}">${esc(c.name)} — ${esc(c.location)}</option>`).join('');
     sel.value = cur;
 
     const fsel = document.getElementById('sale-filter-customer');
@@ -1214,20 +1242,28 @@ function openAddCustomer(c = null) {
     document.getElementById('c-name').value = c?.name || '';
     document.getElementById('c-phone').value = c?.phone || '';
     document.getElementById('c-location').value = c?.location || '';
-    document.getElementById('c-rate').value = c?.rate || '';
     document.getElementById('c-address').value = c?.address || '';
     document.getElementById('c-map').value = c?.mapLink || '';
     document.getElementById('c-notes').value = c?.notes || '';
+    PLATE_TYPES.forEach(pt => {
+        const el = document.getElementById('c-rate-' + pt.key);
+        if (el) el.value = c?.rates?.[pt.key] || '';
+    });
     openModal('modal-customer');
 }
 
 async function saveCustomer(e) {
     e.preventDefault();
+    const rates = {};
+    PLATE_TYPES.forEach(pt => {
+        const val = parseFloat(document.getElementById('c-rate-' + pt.key)?.value);
+        if (val > 0) rates[pt.key] = val;
+    });
     const data = {
         name: document.getElementById('c-name').value.trim(),
         phone: document.getElementById('c-phone').value.trim(),
         location: document.getElementById('c-location').value.trim(),
-        rate: parseFloat(document.getElementById('c-rate').value),
+        rates,
         address: document.getElementById('c-address').value.trim(),
         mapLink: document.getElementById('c-map').value.trim(),
         notes: document.getElementById('c-notes').value.trim(),
@@ -1267,7 +1303,9 @@ function viewCustomer(id) {
         </div>
         <div class="card" style="margin-bottom:12px">
             <div class="detail-row"><span class="dlabel">Phone</span><span class="dval"><a href="tel:${c.phone}" style="color:var(--primary)">${esc(c.phone)}</a></span></div>
-            <div class="detail-row"><span class="dlabel">Rate / Bundle</span><span class="dval">&#8377;${c.rate}</span></div>
+            ${c.rates && Object.keys(c.rates).length > 0
+                ? PLATE_TYPES.filter(pt => c.rates[pt.key]).map(pt => `<div class="detail-row"><span class="dlabel">${esc(pt.label)}</span><span class="dval">&#8377;${c.rates[pt.key]}/bundle</span></div>`).join('')
+                : c.rate ? `<div class="detail-row"><span class="dlabel">Rate / Bundle</span><span class="dval">&#8377;${c.rate}</span></div>` : ''}
             ${c.address ? `<div class="detail-row"><span class="dlabel">Address</span><span class="dval" style="max-width:60%;word-break:break-word">${esc(c.address)}</span></div>` : ''}
             ${c.mapLink ? `<div class="detail-row"><span class="dlabel">Maps</span><span class="dval"><a href="${c.mapLink}" target="_blank" style="color:var(--primary)">Open Maps &#8599;</a></span></div>` : ''}
             ${c.notes ? `<div class="detail-row"><span class="dlabel">Notes</span><span class="dval">${esc(c.notes)}</span></div>` : ''}
@@ -1304,6 +1342,9 @@ function deleteCustomer(id) {
 function buildSaleCard(s) {
     const sc = s.status === 'paid' ? 'badge-paid' : s.status === 'partial' ? 'badge-partial' : 'badge-pending';
     const sl = s.status === 'paid' ? 'Paid' : s.status === 'partial' ? 'Partial' : 'Pending';
+    const itemsHTML = s.items && s.items.length > 0
+        ? s.items.map(it => `<div class="sale-detail"><b>${it.bundles}</b> × ${esc(it.plateLabel)}</div>`).join('')
+        : `<div class="sale-detail">&#128230; <b>${s.bundles||0}</b> bundles</div>`;
     return `
         <div class="sale-card" onclick="viewSale('${s.id}')">
             <div class="sale-top">
@@ -1313,10 +1354,7 @@ function buildSaleCard(s) {
                 </div>
                 <span class="badge ${sc}">${sl}</span>
             </div>
-            <div class="sale-row">
-                <div class="sale-detail">&#128230; <b>${s.bundles}</b> bundles</div>
-                <div class="sale-detail">Rate: <b>&#8377;${s.rate}</b></div>
-            </div>
+            <div class="sale-row">${itemsHTML}</div>
             <div class="sale-amount">${fmtINR(s.total)}</div>
         </div>`;
 }
@@ -1351,6 +1389,10 @@ function renderSales() {
     // Payment mode filter
     const payMode = document.getElementById('sale-filter-mode')?.value;
     if (payMode) filtered = filtered.filter(s => s.paymentMode === payMode);
+
+    // Plate type filter
+    const plateFilter = document.getElementById('sale-filter-plate')?.value;
+    if (plateFilter) filtered = filtered.filter(s => s.items?.some(it => it.plateKey === plateFilter));
 
     // Date range filter
     const fromDate = document.getElementById('sale-filter-from')?.value;
@@ -1426,12 +1468,17 @@ function fillStockDropdown() {
 }
 
 function onCustomerChange() {
-    const sel = document.getElementById('s-customer');
-    const opt = sel.options[sel.selectedIndex];
-    if (opt && opt.dataset.rate) {
-        document.getElementById('s-rate').value = opt.dataset.rate;
-        calcSaleTotal();
-    }
+    const custId = document.getElementById('s-customer').value;
+    const customer = customers.find(x => x.id === custId);
+    if (!customer) return;
+    document.querySelectorAll('.sale-item-row').forEach(row => {
+        const plateSelect = row.querySelector('.item-plate-select');
+        const rateInput = row.querySelector('.item-rate-input');
+        if (plateSelect && plateSelect.value && customer.rates) {
+            rateInput.value = customer.rates[plateSelect.value] || '';
+        }
+    });
+    calcSaleItems();
 }
 
 function onStatusChange() {
@@ -1439,10 +1486,65 @@ function onStatusChange() {
     document.getElementById('payment-fields').style.display = (v==='paid'||v==='partial') ? 'block' : 'none';
 }
 
-function calcSaleTotal() {
-    const b = parseFloat(document.getElementById('s-bundles').value)||0;
-    const r = parseFloat(document.getElementById('s-rate').value)||0;
-    document.getElementById('s-total').value = b*r || '';
+function addSaleItem(plateKey='', bundles='', rate='') {
+    const container = document.getElementById('sale-items-container');
+    const idx = container.children.length + 1;
+    const row = document.createElement('div');
+    row.className = 'sale-item-row';
+    row.innerHTML = `
+        <div class="sale-item-header">
+            <span>Item ${idx}</span>
+            <button type="button" class="btn-icon" style="color:var(--danger)" onclick="this.closest('.sale-item-row').remove(); renumberSaleItems(); calcSaleItems()">&#x2715;</button>
+        </div>
+        <div class="form-group" style="margin-bottom:8px">
+            <select class="item-plate-select" style="width:100%;padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;outline:none;font-family:inherit;background:white" onchange="onItemPlateChange(this)">
+                <option value="">-- Select Plate Type --</option>
+                ${PLATE_TYPES.map(pt => `<option value="${pt.key}" ${plateKey===pt.key?'selected':''}>${pt.label}</option>`).join('')}
+            </select>
+        </div>
+        <div class="form-row" style="margin-bottom:6px">
+            <div class="form-group" style="margin-bottom:0">
+                <input type="number" class="item-bundles-input" placeholder="Bundles" min="1" value="${bundles}" oninput="calcSaleItems()" style="width:100%;padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;outline:none;font-family:inherit">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <input type="number" class="item-rate-input" placeholder="Rate &#8377;" min="0" value="${rate}" oninput="calcSaleItems()" style="width:100%;padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;outline:none;font-family:inherit">
+            </div>
+        </div>
+        <div style="font-size:12px;color:var(--gray-500);font-weight:600">Subtotal: <span class="item-subtotal" style="color:var(--gray-900);font-weight:700">&#8377;0</span></div>
+    `;
+    container.appendChild(row);
+    calcSaleItems();
+}
+
+function renumberSaleItems() {
+    document.querySelectorAll('.sale-item-row').forEach((row, i) => {
+        const h = row.querySelector('.sale-item-header span');
+        if (h) h.textContent = 'Item ' + (i + 1);
+    });
+}
+
+function onItemPlateChange(select) {
+    const row = select.closest('.sale-item-row');
+    const rateInput = row.querySelector('.item-rate-input');
+    const custId = document.getElementById('s-customer').value;
+    const customer = customers.find(x => x.id === custId);
+    if (customer?.rates && select.value) {
+        rateInput.value = customer.rates[select.value] || '';
+    }
+    calcSaleItems();
+}
+
+function calcSaleItems() {
+    let total = 0;
+    document.querySelectorAll('.sale-item-row').forEach(row => {
+        const b = parseFloat(row.querySelector('.item-bundles-input')?.value) || 0;
+        const r = parseFloat(row.querySelector('.item-rate-input')?.value) || 0;
+        const sub = b * r;
+        const subtotalEl = row.querySelector('.item-subtotal');
+        if (subtotalEl) subtotalEl.innerHTML = '&#8377;' + sub.toLocaleString('en-IN');
+        total += sub;
+    });
+    document.getElementById('s-total').value = total || '';
 }
 
 function calcStockTotal() {
@@ -1457,14 +1559,21 @@ function openAddSale(s = null) {
     document.getElementById('s-date').value = s?.date||todayStr();
     document.getElementById('s-customer').value = s?.customerId||'';
     document.getElementById('s-stock').value = s?.stockNumber||'';
-    document.getElementById('s-bundles').value = s?.bundles||'';
-    document.getElementById('s-rate').value = s?.rate||'';
     document.getElementById('s-total').value = s?.total||'';
     document.getElementById('s-status').value = s?.status||'pending';
     document.getElementById('s-pay-mode').value = s?.paymentMode||'cash';
     document.getElementById('s-pay-date').value = s?.paymentDate||'';
     document.getElementById('s-pay-amount').value = s?.amountPaid||'';
     document.getElementById('s-notes').value = s?.notes||'';
+    const container = document.getElementById('sale-items-container');
+    container.innerHTML = '';
+    if (s?.items && s.items.length > 0) {
+        s.items.forEach(it => addSaleItem(it.plateKey, it.bundles, it.rate));
+    } else if (s?.bundles) {
+        addSaleItem('', s.bundles, s.rate);
+    } else {
+        addSaleItem();
+    }
     onStatusChange();
     openModal('modal-sale');
 }
@@ -1475,19 +1584,34 @@ async function saveSale(e) {
     const opt = sel.options[sel.selectedIndex];
     const stockNum = document.getElementById('s-stock').value;
 
+    const items = [];
+    let hasError = false;
+    document.querySelectorAll('.sale-item-row').forEach(row => {
+        const plateKey = row.querySelector('.item-plate-select')?.value;
+        const bundles = parseInt(row.querySelector('.item-bundles-input')?.value) || 0;
+        const rate = parseFloat(row.querySelector('.item-rate-input')?.value) || 0;
+        if (!plateKey || !bundles) { hasError = true; return; }
+        const pt = PLATE_TYPES.find(x => x.key === plateKey);
+        items.push({ plateKey, plateLabel: pt?.label || plateKey, size: pt?.size || '', type: pt?.type || '', bundles, rate, subtotal: bundles * rate });
+    });
+    if (hasError || items.length === 0) { showToast('Please fill all plate type rows'); return; }
+
+    const totalBundles = items.reduce((a, x) => a + x.bundles, 0);
+    const total = items.reduce((a, x) => a + x.subtotal, 0);
+
     const data = {
         date: document.getElementById('s-date').value,
         customerId: sel.value,
         customerName: opt ? (opt.dataset.name || opt.text.split('—')[0].trim()) : '',
-        location: opt ? (opt.dataset.loc||'') : '',
+        location: opt ? (opt.dataset.loc || '') : '',
         stockNumber: stockNum ? parseInt(stockNum) : null,
-        bundles: parseInt(document.getElementById('s-bundles').value)||0,
-        rate: parseFloat(document.getElementById('s-rate').value)||0,
-        total: parseFloat(document.getElementById('s-total').value)||0,
+        items,
+        bundles: totalBundles,
+        total,
         status: document.getElementById('s-status').value,
         paymentMode: document.getElementById('s-pay-mode').value,
         paymentDate: document.getElementById('s-pay-date').value,
-        amountPaid: parseFloat(document.getElementById('s-pay-amount').value)||0,
+        amountPaid: parseFloat(document.getElementById('s-pay-amount').value) || 0,
         notes: document.getElementById('s-notes').value.trim(),
         updatedAt: new Date().toISOString()
     };
@@ -1523,8 +1647,9 @@ function viewSale(id) {
             <span class="badge ${sc}">${sl}</span>
         </div>
         <div class="card" style="margin-bottom:12px">
-            <div class="detail-row"><span class="dlabel">Bundles</span><span class="dval">${s.bundles}</span></div>
-            <div class="detail-row"><span class="dlabel">Rate / Bundle</span><span class="dval">&#8377;${s.rate}</span></div>
+            ${s.items && s.items.length > 0
+                ? s.items.map(it => `<div class="detail-row"><span class="dlabel">${esc(it.plateLabel)}</span><span class="dval">${it.bundles} bundles &nbsp;&#183;&nbsp; &#8377;${it.rate}/bundle &nbsp;&#183;&nbsp; ${fmtINR(it.subtotal)}</span></div>`).join('')
+                : `<div class="detail-row"><span class="dlabel">Bundles</span><span class="dval">${s.bundles||0}</span></div>`}
             <div class="detail-row"><span class="dlabel">Total Amount</span><span class="dval" style="font-size:16px">${fmtINR(s.total)}</span></div>
             ${s.status!=='pending'?`
             <div class="divider"></div>
@@ -1819,6 +1944,15 @@ function renderReports() {
             <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px">Sales</div>
             <div class="report-row"><span>Transactions</span><span class="rv">${ms.length}</span></div>
             <div class="report-row"><span>Bundles Sold</span><span class="rv">${totalBundles}</span></div>
+            ${(() => {
+                const bd = {};
+                ms.forEach(s => (s.items||[]).forEach(it => {
+                    if (!bd[it.plateKey]) bd[it.plateKey] = { label: it.plateLabel, bundles: 0 };
+                    bd[it.plateKey].bundles += (it.bundles||0);
+                }));
+                const rows = PLATE_TYPES.filter(pt => bd[pt.key]);
+                return rows.length > 0 ? rows.map(pt => `<div class="report-row" style="padding-left:10px"><span style="color:var(--gray-500)">&#8627; ${esc(pt.label)}</span><span class="rv">${bd[pt.key].bundles} bundles</span></div>`).join('') : '';
+            })()}
             <div class="report-row"><span>Total Revenue</span><span class="rv">${fmtINR(totalAmt)}</span></div>
             <div class="report-row"><span>Collected</span><span class="rv" style="color:var(--success)">${fmtINR(collected+partialCollected)}</span></div>
             <div class="report-row"><span>Pending</span><span class="rv" style="color:var(--danger)">${fmtINR(pending)}</span></div>
@@ -1924,6 +2058,14 @@ async function shareCustomerCard(id) {
         .filter(s=>s.status==='pending'||s.status==='partial')
         .sort((a,b)=>a.date>b.date?1:-1);
 
+    const paidSales = cSales
+        .filter(s=>s.status==='paid'||(s.status==='partial'&&s.amountPaid>0))
+        .sort((a,b)=>a.paymentDate>b.paymentDate?-1:1);
+    const lastPayment = paidSales.length > 0 ? {
+        amount: paidSales[0].status==='paid' ? paidSales[0].total : paidSales[0].amountPaid,
+        date: paidSales[0].paymentDate || paidSales[0].date
+    } : null;
+
     const today = new Date();
     const genDate = today.toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
 
@@ -1935,18 +2077,23 @@ async function shareCustomerCard(id) {
             <div style="background:#1e4d0a;color:#fff;padding:8px 12px;font-size:12px;font-weight:700;letter-spacing:1px">
                 &#128203; PENDING BILLS
             </div>
-            <table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid #ddd;border-top:none">
+            <table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #ddd;border-top:none">
                 <tr style="background:#f5f5f5">
-                    <th style="padding:7px 10px;text-align:left;font-weight:700;border-bottom:1px solid #ddd;color:#333">Date</th>
-                    <th style="padding:7px 10px;text-align:center;font-weight:700;border-bottom:1px solid #ddd;color:#333">Bundles</th>
-                    <th style="padding:7px 10px;text-align:right;font-weight:700;border-bottom:1px solid #ddd;color:#333">Amount</th>
+                    <th style="padding:6px 8px;text-align:left;font-weight:700;border-bottom:1px solid #ddd;color:#333">Date</th>
+                    <th style="padding:6px 8px;text-align:left;font-weight:700;border-bottom:1px solid #ddd;color:#333">Plates</th>
+                    <th style="padding:6px 8px;text-align:right;font-weight:700;border-bottom:1px solid #ddd;color:#333">Amount</th>
                 </tr>
-                ${pendingSales.map(s=>`
-                <tr>
-                    <td style="padding:7px 10px;border-bottom:1px solid #eee;color:#333">${fd(s.date)}</td>
-                    <td style="padding:7px 10px;text-align:center;border-bottom:1px solid #eee;color:#333">${s.bundles} Bundles</td>
-                    <td style="padding:7px 10px;text-align:right;border-bottom:1px solid #eee;color:#c0392b;font-weight:700">${r(s.status==='partial'?Math.max(0,(s.total||0)-(s.amountPaid||0)):s.total)}</td>
-                </tr>`).join('')}
+                ${pendingSales.map(s => {
+                    const platesText = s.items && s.items.length > 0
+                        ? s.items.map(it => it.bundles + '\u00D7' + it.plateLabel).join(', ')
+                        : (s.bundles||0) + ' Bundles';
+                    const amt = s.status==='partial' ? Math.max(0,(s.total||0)-(s.amountPaid||0)) : (s.total||0);
+                    return `<tr>
+                        <td style="padding:6px 8px;border-bottom:1px solid #eee;color:#333;white-space:nowrap">${fd(s.date)}</td>
+                        <td style="padding:6px 8px;border-bottom:1px solid #eee;color:#333">${platesText}</td>
+                        <td style="padding:6px 8px;border-bottom:1px solid #eee;color:#c0392b;font-weight:700;text-align:right;white-space:nowrap">${r(amt)}</td>
+                    </tr>`;
+                }).join('')}
             </table>
         </div>` : '';
 
@@ -1984,14 +2131,14 @@ async function shareCustomerCard(id) {
         <div style="margin-top:14px">
             <div style="background:#1e4d0a;color:#fff;padding:8px 12px;font-size:12px;font-weight:700;letter-spacing:1px">&#128176; PAYMENT SUMMARY</div>
             <div style="border:1px solid #ddd;border-top:none;padding:0 12px">
+                ${lastPayment ? `
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0">
-                    <div style="display:flex;align-items:center;gap:8px"><span>&#128722;</span><span style="font-size:12px;color:#333">Total Sales Amount</span></div>
-                    <span style="background:#1a7a1a;color:#fff;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:700">${r(totalSalesAmt)}</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0">
-                    <div style="display:flex;align-items:center;gap:8px"><span>&#9989;</span><span style="font-size:12px;color:#333">Amount Collected</span></div>
-                    <span style="background:#1a7a1a;color:#fff;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:700">${r(collected)}</span>
-                </div>
+                    <div style="display:flex;align-items:center;gap:8px"><span>&#9989;</span><span style="font-size:12px;color:#333">Last Payment</span></div>
+                    <div style="text-align:right">
+                        <div style="font-size:12px;font-weight:700;color:#1a7a1a">${r(lastPayment.amount)}</div>
+                        <div style="font-size:10px;color:#666">${fd(lastPayment.date)}</div>
+                    </div>
+                </div>` : ''}
                 <div style="display:flex;justify-content:space-between;align-items:center;background:#fff5f5;padding:8px 12px;margin:0 -12px">
                     <div style="display:flex;align-items:center;gap:8px"><span>&#9200;</span><span style="font-size:12px;color:#c0392b;font-weight:700">Pending Amount</span></div>
                     <span style="background:#c0392b;color:#fff;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:700">${r(pendingAmt)}</span>
