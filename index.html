@@ -1345,6 +1345,7 @@ function buildSaleCard(s) {
     const itemsHTML = s.items && s.items.length > 0
         ? s.items.map(it => `<div class="sale-detail"><b>${it.bundles}</b> × ${esc(it.plateLabel)}</div>`).join('')
         : `<div class="sale-detail">&#128230; <b>${s.bundles||0}</b> bundles</div>`;
+    const balanceDue = s.status === 'pending' ? s.total : s.status === 'partial' ? Math.max(0,(s.total||0)-(s.amountPaid||0)) : 0;
     return `
         <div class="sale-card" onclick="viewSale('${s.id}')">
             <div class="sale-top">
@@ -1355,7 +1356,10 @@ function buildSaleCard(s) {
                 <span class="badge ${sc}">${sl}</span>
             </div>
             <div class="sale-row">${itemsHTML}</div>
-            <div class="sale-amount">${fmtINR(s.total)}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+                <div class="sale-amount" style="margin-top:0">${fmtINR(s.total)}</div>
+                ${balanceDue > 0 ? `<div style="font-size:13px;font-weight:700;color:var(--danger)">Due: ${fmtINR(balanceDue)}</div>` : ''}
+            </div>
         </div>`;
 }
 
