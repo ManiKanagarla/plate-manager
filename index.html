@@ -211,6 +211,9 @@
         .stock-stat { background: var(--gray-50); border-radius: 10px; padding: 9px 11px; border: 1px solid var(--gray-100); }
         .stock-stat .slabel { font-size: 10px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
         .stock-stat .sval { font-size: 14px; font-weight: 700; margin-top: 3px; }
+        .stock-order-block { border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 10px; background: var(--gray-50); }
+        .stock-order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .stock-order-title { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
 
         /* BADGE */
         .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -543,7 +546,7 @@
         <div class="stat-card">
             <div class="stat-label">Total Customers</div>
             <div class="stat-value" id="dash-customers">0</div>
-            <div class="stat-sub">registered</div>
+            <div class="stat-sub" id="dash-customers-sub">registered</div>
         </div>
     </div>
 
@@ -577,6 +580,8 @@
     </div>
     <div class="filter-bar" id="customer-filter-bar">
         <button class="chip active" onclick="setCustFilter('all',this)">All</button>
+        <button class="chip" onclick="setCustFilter('active',this)">Active</button>
+        <button class="chip" onclick="setCustFilter('inactive',this)">Inactive</button>
         <button class="chip" onclick="setCustFilter('pending',this)">Pending Only</button>
     </div>
     <div id="customer-location-bar"></div>
@@ -635,6 +640,9 @@
         <input type="date" id="sale-filter-to" onchange="renderSales()" title="To date">
         <button class="btn-icon" onclick="clearDateFilter()" title="Clear dates" style="flex-shrink:0">&#x2715;</button>
     </div>
+    <div style="text-align:right;margin-bottom:4px">
+        <button type="button" onclick="clearAllSaleFilters()" style="font-size:11px;font-weight:600;color:var(--primary);background:none;border:none;cursor:pointer;padding:2px 0;text-decoration:underline">&#x2715; Clear All Filters</button>
+    </div>
     <div id="sales-summary" style="margin-bottom:10px;"></div>
     <div id="sales-list">
         <div class="empty"><div class="eicon">&#128230;</div><p>No sales yet</p></div>
@@ -665,6 +673,15 @@
     </div>
     <div id="expense-list">
         <div class="empty"><div class="eicon">&#128179;</div><p>No expenses added yet</p></div>
+    </div>
+
+    <div class="section-header" style="margin-top:16px">
+        <h2>&#129309; Chit Fund</h2>
+        <button class="btn btn-primary btn-sm" onclick="openAddChitFund()">+ Add Month</button>
+    </div>
+    <div id="chitfund-summary" style="margin-bottom:10px"></div>
+    <div id="chitfund-list">
+        <div class="empty"><div class="eicon">&#129309;</div><p>No chit fund entries yet</p></div>
     </div>
 </div>
 
@@ -855,46 +872,32 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>Stock Number *</label>
-                    <input type="number" id="st-num" placeholder="e.g. 9" required min="1">
+                    <input type="number" id="st-num" placeholder="e.g. 16" required min="1">
                 </div>
                 <div class="form-group">
-                    <label>Purchase Date *</label>
-                    <input type="date" id="st-date" required>
+                    <label>Billing Month * <span style="font-weight:400;color:var(--gray-500);font-size:10px">(for reports)</span></label>
+                    <input type="month" id="st-month" required>
                 </div>
             </div>
-            <div class="form-group">
-                <label>Billing Month * <span style="font-weight:400;color:var(--gray-500);font-size:11px">(month this stock counts under in reports)</span></label>
-                <input type="month" id="st-month" required>
-            </div>
-            <div class="form-group">
-                <label>Source Location *</label>
-                <input type="text" id="st-source" placeholder="Where stock came from" required>
-            </div>
-            <div class="form-group">
-                <label>Supplier Name</label>
-                <input type="text" id="st-supplier" placeholder="Supplier name (optional)">
-            </div>
-            <div class="form-group">
-                <label>Total Bundles Received *</label>
-                <input type="number" id="st-bundles" placeholder="Number of bundles" required min="1">
-            </div>
+
+            <div style="margin:4px 0 8px;font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px">Purchase Orders</div>
+            <div id="stock-orders-container"></div>
+            <button type="button" class="btn btn-outline btn-full" onclick="addStockOrder()" style="margin-bottom:14px">+ Add Order</button>
+
             <div class="form-row">
                 <div class="form-group">
-                    <label>Purchase Cost (&#8377;) *</label>
-                    <input type="number" id="st-purchase" placeholder="Amount paid" required min="0" oninput="calcStockTotal()">
+                    <label>Total Bundles</label>
+                    <input type="number" id="st-bundles" readonly placeholder="Auto calculated">
                 </div>
                 <div class="form-group">
-                    <label>Transport Cost (&#8377;)</label>
-                    <input type="number" id="st-transport" placeholder="0" min="0" value="0" oninput="calcStockTotal()">
+                    <label>Total Cost (&#8377;)</label>
+                    <input type="number" id="st-total" readonly placeholder="Auto calculated">
                 </div>
             </div>
-            <div class="form-group">
-                <label>Total Cost (&#8377;)</label>
-                <input type="number" id="st-total" readonly>
-            </div>
+
             <div class="form-row">
                 <div class="form-group">
-                    <label>Payment Mode *</label>
+                    <label>Payment Mode</label>
                     <select id="st-pay-mode">
                         <option value="cash">Cash</option>
                         <option value="phonepay">Phone Pay</option>
@@ -903,7 +906,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Payment Date *</label>
+                    <label>Payment Date</label>
                     <input type="date" id="st-pay-date">
                 </div>
             </div>
@@ -972,6 +975,67 @@
     </div>
 </div>
 
+<!-- MODAL: CHIT FUND -->
+<div class="modal-overlay" id="modal-chitfund">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <h3 id="chitfund-modal-title">Add Chit Fund Payment</h3>
+            <button class="modal-close" onclick="closeModal('modal-chitfund')">&#x2715;</button>
+        </div>
+        <form id="chitfund-form" onsubmit="saveChitFund(event)">
+            <input type="hidden" id="cf-id">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Month *</label>
+                    <input type="month" id="cf-month" required>
+                </div>
+                <div class="form-group">
+                    <label>Amount (&#8377;) *</label>
+                    <input type="number" id="cf-amount" placeholder="Amount" required min="0">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Payment Status *</label>
+                <select id="cf-status" required onchange="onChitFundStatusChange()">
+                    <option value="pending">Pending</option>
+                    <option value="paid">Paid</option>
+                </select>
+            </div>
+            <div id="cf-paid-fields" style="display:none">
+                <div class="form-group">
+                    <label>Payment Date</label>
+                    <input type="date" id="cf-pay-date">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="cf-notes" placeholder="Any extra info..." rows="2"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" style="margin-top:4px">Save</button>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: PAYMENT CARD PREVIEW -->
+<div class="modal-overlay" id="modal-card-preview">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <h3>Payment Card Preview</h3>
+            <button class="modal-close" onclick="closeModal('modal-card-preview')">&#x2715;</button>
+        </div>
+        <div style="text-align:center;margin-bottom:6px;font-size:12px;color:var(--gray-500)">Check the details before sharing</div>
+        <div style="overflow:auto;max-height:55vh;border-radius:10px;border:1px solid var(--gray-200);margin-bottom:14px">
+            <img id="card-preview-img" src="" alt="Payment Card" style="width:100%;display:block">
+        </div>
+        <button class="btn btn-primary btn-full" onclick="doShareCard()" style="justify-content:center;gap:8px;font-size:15px">
+            &#128246; Share to WhatsApp
+        </button>
+        <button class="btn btn-outline btn-full" onclick="closeModal('modal-card-preview')" style="margin-top:8px">Cancel</button>
+    </div>
+</div>
+
 <!-- CONFIRM DIALOG -->
 <div class="confirm-overlay" id="confirm-overlay">
     <div class="confirm-box">
@@ -1025,6 +1089,9 @@ let customers = [];
 let sales = [];
 let stocks = [];
 let expenses = [];
+let chitfund = [];
+let pendingShareFile = null;
+let pendingShareName = '';
 let salesFilter = 'all';
 let custFilter = 'all';
 let custLocationFilter = '';
@@ -1037,7 +1104,7 @@ function init() {
     const today = new Date();
     document.getElementById('header-date').textContent = today.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
     document.getElementById('s-date').value = toDateStr(today);
-    document.getElementById('st-date').value = toDateStr(today);
+    document.getElementById('st-month').value = monthStr();
 
     db.collection('customers').orderBy('name').onSnapshot(snap => {
         customers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -1064,6 +1131,11 @@ function init() {
         expenses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderExpenses();
         renderReports();
+    }, err => showToast('DB Error: ' + err.code));
+
+    db.collection('chitfund').orderBy('month', 'desc').onSnapshot(snap => {
+        chitfund = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderChitFund();
     }, err => showToast('DB Error: ' + err.code));
 }
 
@@ -1138,7 +1210,11 @@ function renderDashboard() {
     document.getElementById('dash-month-amount').innerHTML = fmtINR(monthRevenue) + ' collected';
     document.getElementById('dash-pending').innerHTML = fmtINR(pendingAmt);
     document.getElementById('dash-pending-count').textContent = pendingSales.length + ' sales';
+    const activeCount = customers.filter(c => c.isActive !== false).length;
+    const inactiveCount = customers.filter(c => c.isActive === false).length;
     document.getElementById('dash-customers').textContent = customers.length;
+    document.getElementById('dash-customers-sub').innerHTML =
+        `<span style="color:var(--success)">${activeCount} active</span> &nbsp;&#183;&nbsp; <span style="color:var(--gray-500)">${inactiveCount} inactive</span>`;
 
     // Current stock
     const stockEl = document.getElementById('dash-stock');
@@ -1192,6 +1268,8 @@ function renderCustomers() {
 
     if (search) list = list.filter(c => (c.name||'').toLowerCase().includes(search) || (c.phone||'').includes(search));
     if (custLocationFilter) list = list.filter(c => c.location === custLocationFilter);
+    if (custFilter === 'active') list = list.filter(c => c.isActive !== false);
+    if (custFilter === 'inactive') list = list.filter(c => c.isActive === false);
     if (custFilter === 'pending') {
         const pendingIds = new Set(sales.filter(s => s.status==='pending'||s.status==='partial').map(s => s.customerId));
         list = list.filter(c => pendingIds.has(c.id));
@@ -1202,15 +1280,18 @@ function renderCustomers() {
         return;
     }
     el.innerHTML = list.map(c => {
+        const isActive = c.isActive !== false;
         const pendingAmt = sales.filter(s=>s.customerId===c.id&&(s.status==='pending'||s.status==='partial')).reduce((a,s)=>{
             if(s.status==='partial') return a+Math.max(0,(s.total||0)-(s.amountPaid||0));
             return a+(s.total||0);
         },0);
         return `
-        <div class="item-card" onclick="viewCustomer('${c.id}')">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="item-card" onclick="viewCustomer('${c.id}')" style="${!isActive ? 'opacity:0.6' : ''}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
                 <div class="item-name">${esc(c.name)}</div>
-                <span class="badge badge-blue">&#8377;${c.rate}/bundle</span>
+                <span style="flex-shrink:0;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;background:${isActive ? 'var(--success-light)' : 'var(--gray-100)'};color:${isActive ? 'var(--success)' : 'var(--gray-500)'}">
+                    ${isActive ? '&#9679; Active' : '&#9675; Inactive'}
+                </span>
             </div>
             <div class="item-sub">&#128222; ${esc(c.phone)} &nbsp;&#183;&nbsp; &#128205; ${esc(c.location)}</div>
             ${c.address ? `<div class="item-sub" style="margin-top:2px">${esc(c.address)}</div>` : ''}
@@ -1296,9 +1377,15 @@ function viewCustomer(id) {
         return a+(s.total||0);
     },0);
 
+    const isActive = c.isActive !== false;
     document.getElementById('customer-view-content').innerHTML = `
         <div style="margin-bottom:14px">
-            <div style="font-size:20px;font-weight:800">${esc(c.name)}</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <div style="font-size:20px;font-weight:800">${esc(c.name)}</div>
+                <span style="padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;background:${isActive ? 'var(--success-light)' : 'var(--gray-100)'};color:${isActive ? 'var(--success)' : 'var(--gray-500)'}">
+                    ${isActive ? '&#9679; Active' : '&#9675; Inactive'}
+                </span>
+            </div>
             <div style="color:var(--gray-500);font-size:13px;margin-top:3px">&#128205; ${esc(c.location)}</div>
         </div>
         <div class="card" style="margin-bottom:12px">
@@ -1317,6 +1404,9 @@ function viewCustomer(id) {
             <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--danger);font-size:16px">${fmtINR(pendingAmt)}</div></div>
         </div>
         <button class="btn btn-success btn-full" onclick="shareCustomerCard('${id}')" style="margin-bottom:8px;justify-content:center">&#128246; Share Payment Card</button>
+        <button class="btn btn-full" onclick="toggleCustomerStatus('${id}')" style="margin-bottom:8px;justify-content:center;background:${isActive ? 'var(--gray-100)' : 'var(--success-light)'};color:${isActive ? 'var(--gray-700)' : 'var(--success)'};border:1.5px solid ${isActive ? 'var(--gray-200)' : 'var(--success)'}">
+            ${isActive ? '&#9675; Mark as Inactive' : '&#9679; Mark as Active'}
+        </button>
         <div class="action-row">
             <button class="btn btn-outline btn-full" onclick="editSelectedCustomer()">Edit</button>
             <button class="btn btn-danger btn-full" onclick="deleteCustomer('${id}')">Delete</button>
@@ -1336,6 +1426,17 @@ function deleteCustomer(id) {
         closeModal('modal-customer-view');
         showToast('Customer deleted');
     });
+}
+
+async function toggleCustomerStatus(id) {
+    const c = customers.find(x => x.id === id);
+    if (!c) return;
+    const newStatus = c.isActive === false ? true : false;
+    try {
+        await db.collection('customers').doc(id).update({ isActive: newStatus, updatedAt: new Date().toISOString() });
+        showToast(newStatus ? 'Marked as Active' : 'Marked as Inactive');
+        viewCustomer(id);
+    } catch(err) { showToast('Error: ' + err.message); }
 }
 
 // ── SALES ────────────────────────────────────────────────────
@@ -1552,9 +1653,20 @@ function calcSaleItems() {
 }
 
 function calcStockTotal() {
-    const p = parseFloat(document.getElementById('st-purchase').value)||0;
-    const t = parseFloat(document.getElementById('st-transport').value)||0;
-    document.getElementById('st-total').value = p+t || '';
+    let totalBundles = 0, totalPurchaseCost = 0, totalTransportCost = 0;
+    document.querySelectorAll('.stock-order-block').forEach(order => {
+        totalTransportCost += parseFloat(order.querySelector('.so-transport')?.value) || 0;
+        order.querySelectorAll('.stock-item-row').forEach(row => {
+            const b = parseInt(row.querySelector('.si-bundles-input')?.value) || 0;
+            const c = parseFloat(row.querySelector('.si-cost-input')?.value) || 0;
+            totalBundles += b;
+            totalPurchaseCost += c;
+            const el = row.querySelector('.si-subtotal');
+            if (el) el.innerHTML = '&#8377;' + c.toLocaleString('en-IN');
+        });
+    });
+    document.getElementById('st-bundles').value = totalBundles || '';
+    document.getElementById('st-total').value = (totalPurchaseCost + totalTransportCost) || '';
 }
 
 function openAddSale(s = null) {
@@ -1715,13 +1827,31 @@ function renderStocks() {
     el.innerHTML = list.map(s => {
         const soldBundles = sales.filter(x=>x.stockNumber==s.stockNumber).reduce((a,x)=>a+(x.bundles||0),0);
         const remaining = (s.bundles||0) - soldBundles;
+
+        // Orders breakdown (new format) or legacy single-source display
+        let ordersHtml = '';
+        if (s.orders && s.orders.length > 0) {
+            ordersHtml = `<div style="margin-top:10px;border-top:1px solid var(--gray-100);padding-top:8px">
+                ${s.orders.map((o, i) => `
+                <div style="margin-bottom:8px;padding:8px 10px;background:var(--gray-50);border-radius:8px;font-size:12px;border:1px solid var(--gray-100)">
+                    <div style="font-weight:700;color:var(--gray-700);margin-bottom:4px">Order ${i+1} &nbsp;&#183;&nbsp; &#128205;${esc(o.source)}${o.supplier?' &nbsp;&#183;&nbsp; '+esc(o.supplier):''} &nbsp;<span style="color:var(--gray-500);font-weight:400">${fmtDate(o.date)}</span></div>
+                    ${(o.items||[]).map(it=>`<div style="display:flex;justify-content:space-between;color:var(--gray-500);padding:1px 0"><span>&#8627; ${esc(it.plateLabel||it.plateKey)}</span><span>${it.bundles} bundles &nbsp; ${fmtINR(it.purchaseCost)}</span></div>`).join('')}
+                    ${o.transportCost?`<div style="color:var(--gray-500);margin-top:3px">Transport: ${fmtINR(o.transportCost)}</div>`:''}
+                </div>`).join('')}
+            </div>`;
+        }
+
+        const dateDisplay = s.orders && s.orders.length > 0
+            ? s.orders.map(o => fmtDate(o.date)).join(', ')
+            : fmtDate(s.date);
+
         return `
         <div class="stock-card">
             <div class="stock-top">
                 <div>
                     <div class="stock-num-label">Stock ${s.stockNumber}</div>
-                    <div class="stock-src">&#128205; ${esc(s.source)} &nbsp;&#183;&nbsp; ${fmtDate(s.date)}</div>
-                    ${s.supplier?`<div class="stock-src">Supplier: ${esc(s.supplier)}</div>`:''}
+                    <div class="stock-src">&#128205; ${esc(s.source||'—')} &nbsp;&#183;&nbsp; ${dateDisplay}</div>
+                    ${!s.orders && s.supplier?`<div class="stock-src">Supplier: ${esc(s.supplier)}</div>`:''}
                     ${s.billingMonth?`<div class="stock-src">&#128197; Billing Month: ${new Date(s.billingMonth+'-01').toLocaleString('en-IN',{month:'long',year:'numeric'})}</div>`:''}
                 </div>
                 <div style="display:flex;gap:6px">
@@ -1738,6 +1868,7 @@ function renderStocks() {
                 <div class="stock-stat"><div class="slabel">Stock Cost</div><div class="sval">${fmtINR(s.totalCost)}</div></div>
                 ${s.returnBundles?`<div class="stock-stat"><div class="slabel">Returned</div><div class="sval" style="color:var(--danger)">${s.returnBundles} bundles</div></div>`:''}
             </div>
+            ${ordersHtml}
             ${s.paymentMode?`<div style="margin-top:6px;font-size:11px;color:var(--gray-500)">&#128179; Paid via ${s.paymentMode}${s.paymentDate?' on '+fmtDate(s.paymentDate):''}</div>`:''}
             ${s.notes?`<div style="margin-top:6px;font-size:12px;color:var(--gray-500)">&#128221; ${esc(s.notes)}</div>`:''}
         </div>`;
@@ -1746,20 +1877,34 @@ function renderStocks() {
 
 function openAddStock(st = null) {
     document.getElementById('stock-modal-title').textContent = st ? 'Edit Stock' : 'Add Stock Purchase';
-    document.getElementById('st-id').value = st?.id||'';
-    document.getElementById('st-num').value = st?.stockNumber||'';
-    document.getElementById('st-date').value = st?.date||todayStr();
-    document.getElementById('st-month').value = st?.billingMonth||monthStr();
-    document.getElementById('st-source').value = st?.source||'';
-    document.getElementById('st-supplier').value = st?.supplier||'';
-    document.getElementById('st-bundles').value = st?.bundles||'';
-    document.getElementById('st-purchase').value = st?.purchaseCost||'';
-    document.getElementById('st-transport').value = st?.transportCost||0;
-    document.getElementById('st-total').value = st?.totalCost||'';
-    document.getElementById('st-pay-mode').value = st?.paymentMode||'cash';
-    document.getElementById('st-pay-date').value = st?.paymentDate||todayStr();
-    document.getElementById('st-return').value = st?.returnBundles||0;
-    document.getElementById('st-notes').value = st?.notes||'';
+    document.getElementById('st-id').value = st?.id || '';
+    document.getElementById('st-num').value = st?.stockNumber || '';
+    document.getElementById('st-month').value = st?.billingMonth || monthStr();
+    document.getElementById('st-pay-mode').value = st?.paymentMode || 'cash';
+    document.getElementById('st-pay-date').value = st?.paymentDate || todayStr();
+    document.getElementById('st-return').value = st?.returnBundles || 0;
+    document.getElementById('st-notes').value = st?.notes || '';
+
+    const container = document.getElementById('stock-orders-container');
+    container.innerHTML = '';
+
+    if (st?.orders && st.orders.length > 0) {
+        // New multi-order format
+        st.orders.forEach(o => addStockOrder(o));
+    } else if (st) {
+        // Old flat format — migrate to single order display
+        addStockOrder({
+            date: st.date || todayStr(),
+            source: st.source || '',
+            supplier: st.supplier || '',
+            transportCost: st.transportCost || 0,
+            items: st.bundles ? [{ plateKey: '', plateLabel: '', bundles: st.bundles, purchaseCost: st.purchaseCost || 0 }] : []
+        });
+    } else {
+        addStockOrder();
+    }
+
+    calcStockTotal();
     openModal('modal-stock');
 }
 
@@ -1770,24 +1915,52 @@ function editStock(id) {
 
 async function saveStock(e) {
     e.preventDefault();
-    const purchase = parseFloat(document.getElementById('st-purchase').value)||0;
-    const transport = parseFloat(document.getElementById('st-transport').value)||0;
+    const orders = [];
+    let hasError = false;
+
+    document.querySelectorAll('.stock-order-block').forEach(orderEl => {
+        const date = orderEl.querySelector('.so-date')?.value;
+        const source = orderEl.querySelector('.so-source')?.value?.trim();
+        const supplier = orderEl.querySelector('.so-supplier')?.value?.trim() || '';
+        const transportCost = parseFloat(orderEl.querySelector('.so-transport')?.value) || 0;
+        if (!date || !source) { hasError = true; return; }
+
+        const items = [];
+        orderEl.querySelectorAll('.stock-item-row').forEach(row => {
+            const plateKey = row.querySelector('.si-plate-select')?.value;
+            const bundles = parseInt(row.querySelector('.si-bundles-input')?.value) || 0;
+            const purchaseCost = parseFloat(row.querySelector('.si-cost-input')?.value) || 0;
+            if (!plateKey || !bundles) { hasError = true; return; }
+            const pt = PLATE_TYPES.find(x => x.key === plateKey);
+            items.push({ plateKey, plateLabel: pt?.label || plateKey, bundles, purchaseCost });
+        });
+        if (items.length === 0) { hasError = true; return; }
+        orders.push({ date, source, supplier, transportCost, items });
+    });
+
+    if (hasError || orders.length === 0) { showToast('Please fill all order fields and add at least one plate type per order'); return; }
+
+    const totalBundles = orders.reduce((a, o) => a + o.items.reduce((b, it) => b + it.bundles, 0), 0);
+    const totalPurchaseCost = orders.reduce((a, o) => a + o.items.reduce((b, it) => b + it.purchaseCost, 0), 0);
+    const totalTransportCost = orders.reduce((a, o) => a + o.transportCost, 0);
+    const uniqueSources = [...new Set(orders.map(o => o.source))];
+
     const data = {
         stockNumber: parseInt(document.getElementById('st-num').value),
-        date: document.getElementById('st-date').value,
         billingMonth: document.getElementById('st-month').value,
-        source: document.getElementById('st-source').value.trim(),
-        supplier: document.getElementById('st-supplier').value.trim(),
-        bundles: parseInt(document.getElementById('st-bundles').value)||0,
-        purchaseCost: purchase,
-        transportCost: transport,
-        totalCost: purchase + transport,
+        orders,
+        bundles: totalBundles,
+        purchaseCost: totalPurchaseCost,
+        transportCost: totalTransportCost,
+        totalCost: totalPurchaseCost + totalTransportCost,
+        source: uniqueSources.join(', '),
         paymentMode: document.getElementById('st-pay-mode').value,
         paymentDate: document.getElementById('st-pay-date').value,
-        returnBundles: parseInt(document.getElementById('st-return').value)||0,
+        returnBundles: parseInt(document.getElementById('st-return').value) || 0,
         notes: document.getElementById('st-notes').value.trim(),
         updatedAt: new Date().toISOString()
     };
+
     try {
         const id = document.getElementById('st-id').value;
         if (id) {
@@ -1806,6 +1979,104 @@ async function deleteStock(id) {
     showConfirm(async () => {
         await db.collection('stocks').doc(id).delete();
         showToast('Stock deleted');
+    });
+}
+
+function addStockOrder(order = null) {
+    const container = document.getElementById('stock-orders-container');
+    const idx = container.children.length + 1;
+    const block = document.createElement('div');
+    block.className = 'stock-order-block';
+    block.innerHTML = `
+        <div class="stock-order-header">
+            <span class="stock-order-title">Order ${idx}</span>
+            <button type="button" class="btn-icon" style="color:var(--danger)" onclick="removeStockOrder(this)">&#x2715;</button>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Date *</label>
+                <input type="date" class="so-date" value="${order?.date || todayStr()}" required>
+            </div>
+            <div class="form-group">
+                <label>Source *</label>
+                <input type="text" class="so-source" placeholder="Hyderabad, Chennai..." value="${esc(order?.source || '')}" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Supplier</label>
+                <input type="text" class="so-supplier" placeholder="Supplier name" value="${esc(order?.supplier || '')}">
+            </div>
+            <div class="form-group">
+                <label>Transport Cost (&#8377;)</label>
+                <input type="number" class="so-transport" placeholder="0" min="0" value="${order?.transportCost || 0}" oninput="calcStockTotal()">
+            </div>
+        </div>
+        <div class="stock-order-items"></div>
+        <button type="button" class="btn btn-outline" onclick="addStockItem(this.previousElementSibling)" style="font-size:12px;padding:6px 12px;margin-bottom:4px;width:100%">+ Add Plate Type</button>
+    `;
+    container.appendChild(block);
+
+    const itemsContainer = block.querySelector('.stock-order-items');
+    if (order?.items && order.items.length > 0) {
+        order.items.forEach(it => addStockItem(itemsContainer, it.plateKey, it.bundles, it.purchaseCost));
+    } else {
+        addStockItem(itemsContainer);
+    }
+
+    renumberStockOrders();
+    calcStockTotal();
+}
+
+function addStockItem(container, plateKey = '', bundles = '', cost = '') {
+    const idx = container.children.length + 1;
+    const row = document.createElement('div');
+    row.className = 'stock-item-row sale-item-row';
+    row.innerHTML = `
+        <div class="sale-item-header">
+            <span>Plate ${idx}</span>
+            <button type="button" class="btn-icon" style="color:var(--danger)" onclick="(function(b){var c=b.closest('.stock-order-items');b.closest('.stock-item-row').remove();renumberStockItems(c);calcStockTotal();})(this)">&#x2715;</button>
+        </div>
+        <div class="form-group" style="margin-bottom:8px">
+            <select class="si-plate-select" style="width:100%;padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;outline:none;font-family:inherit;background:white">
+                <option value="">-- Select Plate Type --</option>
+                ${PLATE_TYPES.map(pt => `<option value="${pt.key}" ${plateKey===pt.key?'selected':''}>${pt.label}</option>`).join('')}
+            </select>
+        </div>
+        <div class="form-row" style="margin-bottom:6px">
+            <div class="form-group" style="margin-bottom:0">
+                <input type="number" class="si-bundles-input" placeholder="Bundles" min="1" value="${bundles}" oninput="calcStockTotal()" style="width:100%;padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;outline:none;font-family:inherit">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <input type="number" class="si-cost-input" placeholder="Purchase Cost &#8377;" min="0" value="${cost}" oninput="calcStockTotal()" style="width:100%;padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;outline:none;font-family:inherit">
+            </div>
+        </div>
+        <div style="font-size:12px;color:var(--gray-500);font-weight:600;margin-bottom:4px">Cost: <span class="si-subtotal" style="color:var(--gray-900);font-weight:700">&#8377;0</span></div>
+    `;
+    container.appendChild(row);
+    calcStockTotal();
+}
+
+function removeStockOrder(btn) {
+    const container = document.getElementById('stock-orders-container');
+    if (container.children.length <= 1) { showToast('At least one order is required'); return; }
+    btn.closest('.stock-order-block').remove();
+    renumberStockOrders();
+    calcStockTotal();
+}
+
+function renumberStockOrders() {
+    document.querySelectorAll('.stock-order-block').forEach((block, i) => {
+        const title = block.querySelector('.stock-order-title');
+        if (title) title.textContent = 'Order ' + (i + 1);
+    });
+}
+
+function renumberStockItems(container) {
+    if (!container) return;
+    container.querySelectorAll('.stock-item-row').forEach((row, i) => {
+        const h = row.querySelector('.sale-item-header span');
+        if (h) h.textContent = 'Plate ' + (i + 1);
     });
 }
 
@@ -1896,6 +2167,109 @@ async function deleteExpense(id) {
     showConfirm(async () => {
         await db.collection('expenses').doc(id).delete();
         showToast('Expense deleted');
+    });
+}
+
+// ── CHIT FUND ────────────────────────────────────────────────
+function renderChitFund() {
+    const listEl = document.getElementById('chitfund-list');
+    const summaryEl = document.getElementById('chitfund-summary');
+    if (!listEl) return;
+
+    if (chitfund.length === 0) {
+        listEl.innerHTML = '<div class="empty"><div class="eicon">&#129309;</div><p>No chit fund entries yet</p></div>';
+        summaryEl.innerHTML = '';
+        return;
+    }
+
+    const totalPaid = chitfund.filter(c => c.status === 'paid').reduce((a, c) => a + (c.amount || 0), 0);
+    const totalPending = chitfund.filter(c => c.status === 'pending').reduce((a, c) => a + (c.amount || 0), 0);
+
+    summaryEl.innerHTML = `
+        <div style="display:flex;gap:8px;margin-bottom:4px">
+            <div class="stock-stat" style="flex:1"><div class="slabel">Total Paid</div><div class="sval" style="color:var(--success)">${fmtINR(totalPaid)}</div></div>
+            <div class="stock-stat" style="flex:1"><div class="slabel">Pending</div><div class="sval" style="color:${totalPending > 0 ? 'var(--danger)' : 'var(--gray-500)'}">${fmtINR(totalPending)}</div></div>
+            <div class="stock-stat" style="flex:1"><div class="slabel">Months</div><div class="sval">${chitfund.length}</div></div>
+        </div>`;
+
+    listEl.innerHTML = chitfund.map(c => {
+        const [yr, mn] = c.month.split('-');
+        const label = new Date(yr, mn - 1, 1).toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+        const isPaid = c.status === 'paid';
+        return `
+        <div class="stock-card" style="padding:12px 14px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <div style="font-size:14px;font-weight:700">&#128197; ${label}</div>
+                    <div style="font-size:18px;font-weight:800;color:var(--primary);margin-top:2px">${fmtINR(c.amount)}</div>
+                    ${isPaid && c.paymentDate ? `<div style="font-size:11px;color:var(--gray-500);margin-top:2px">Paid on ${fmtDate(c.paymentDate)}</div>` : ''}
+                    ${!isPaid ? `<div style="font-size:11px;color:var(--warning);margin-top:2px">&#9888; Due around 20th</div>` : ''}
+                    ${c.notes ? `<div style="font-size:11px;color:var(--gray-500);margin-top:2px">&#128221; ${esc(c.notes)}</div>` : ''}
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+                    <span style="padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;background:${isPaid ? 'var(--success-light)' : 'var(--warning-light)'};color:${isPaid ? 'var(--success)' : 'var(--warning)'}">
+                        ${isPaid ? '&#10003; Paid' : '&#9203; Pending'}
+                    </span>
+                    <div style="display:flex;gap:6px">
+                        <button class="btn-icon" onclick="editChitFund('${c.id}')">&#9998;</button>
+                        <button class="btn-icon" style="color:var(--danger)" onclick="deleteChitFund('${c.id}')">&#128465;</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function onChitFundStatusChange() {
+    const isPaid = document.getElementById('cf-status').value === 'paid';
+    document.getElementById('cf-paid-fields').style.display = isPaid ? '' : 'none';
+}
+
+function openAddChitFund(c = null) {
+    document.getElementById('chitfund-modal-title').textContent = c ? 'Edit Chit Fund Payment' : 'Add Chit Fund Payment';
+    document.getElementById('cf-id').value = c?.id || '';
+    document.getElementById('cf-month').value = c?.month || monthStr();
+    document.getElementById('cf-amount').value = c?.amount || '';
+    document.getElementById('cf-status').value = c?.status || 'pending';
+    document.getElementById('cf-pay-date').value = c?.paymentDate || '';
+    document.getElementById('cf-notes').value = c?.notes || '';
+    onChitFundStatusChange();
+    openModal('modal-chitfund');
+}
+
+function editChitFund(id) {
+    const c = chitfund.find(x => x.id === id);
+    if (c) openAddChitFund(c);
+}
+
+async function saveChitFund(e) {
+    e.preventDefault();
+    const data = {
+        month: document.getElementById('cf-month').value,
+        amount: parseFloat(document.getElementById('cf-amount').value) || 0,
+        status: document.getElementById('cf-status').value,
+        paymentDate: document.getElementById('cf-pay-date').value || '',
+        notes: document.getElementById('cf-notes').value.trim(),
+        updatedAt: new Date().toISOString()
+    };
+    try {
+        const id = document.getElementById('cf-id').value;
+        if (id) {
+            await db.collection('chitfund').doc(id).update(data);
+            showToast('Chit fund updated!');
+        } else {
+            data.createdAt = new Date().toISOString();
+            await db.collection('chitfund').add(data);
+            showToast('Chit fund entry added!');
+        }
+        closeModal('modal-chitfund');
+    } catch(err) { showToast('Error: ' + err.message); }
+}
+
+async function deleteChitFund(id) {
+    showConfirm(async () => {
+        await db.collection('chitfund').doc(id).delete();
+        showToast('Entry deleted');
     });
 }
 
@@ -2011,6 +2385,20 @@ function setCustLocation(loc, el) {
 function clearDateFilter() {
     document.getElementById('sale-filter-from').value = '';
     document.getElementById('sale-filter-to').value = '';
+    renderSales();
+}
+
+function clearAllSaleFilters() {
+    document.getElementById('sale-search').value = '';
+    document.getElementById('sale-filter-customer').value = '';
+    document.getElementById('sale-filter-stock').value = '';
+    document.getElementById('sale-filter-mode').value = '';
+    document.getElementById('sale-filter-plate').value = '';
+    document.getElementById('sale-filter-from').value = '';
+    document.getElementById('sale-filter-to').value = '';
+    salesFilter = 'all';
+    document.querySelectorAll('#sales-status-bar .chip').forEach(c => c.classList.remove('active'));
+    document.querySelector('#sales-status-bar .chip').classList.add('active');
     renderSales();
 }
 
@@ -2156,7 +2544,7 @@ async function shareCustomerCard(id) {
     </div>`;
 
     document.body.appendChild(cardEl);
-    showToast('Generating card...');
+    showToast('Generating preview...');
 
     try {
         const canvas = await html2canvas(cardEl.firstElementChild, {
@@ -2166,25 +2554,36 @@ async function shareCustomerCard(id) {
         });
         document.body.removeChild(cardEl);
 
-        canvas.toBlob(async blob => {
-            const file = new File([blob], 'payment-card.png', { type: 'image/png' });
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                try {
-                    await navigator.share({ files: [file], title: 'Payment Summary - ' + c.name });
-                } catch(e) {
-                    if (e.name !== 'AbortError') showToast('Share cancelled');
-                }
-            } else {
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'payment-' + c.name.replace(/\s+/g,'-') + '.png';
-                a.click();
-                showToast('Image downloaded — share manually');
-            }
+        canvas.toBlob(blob => {
+            pendingShareFile = new File([blob], 'payment-card.png', { type: 'image/png' });
+            pendingShareName = c.name;
+            const previewImg = document.getElementById('card-preview-img');
+            previewImg.src = URL.createObjectURL(blob);
+            closeModal('modal-customer-view');
+            openModal('modal-card-preview');
         }, 'image/png');
     } catch(err) {
         if (cardEl.parentNode) document.body.removeChild(cardEl);
         showToast('Error generating card');
+    }
+}
+
+async function doShareCard() {
+    if (!pendingShareFile) return;
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [pendingShareFile] })) {
+        try {
+            await navigator.share({ files: [pendingShareFile], title: 'Payment Summary - ' + pendingShareName });
+            closeModal('modal-card-preview');
+        } catch(e) {
+            if (e.name !== 'AbortError') showToast('Share cancelled');
+        }
+    } else {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(pendingShareFile);
+        a.download = 'payment-' + pendingShareName.replace(/\s+/g, '-') + '.png';
+        a.click();
+        showToast('Image downloaded — share manually');
+        closeModal('modal-card-preview');
     }
 }
 
