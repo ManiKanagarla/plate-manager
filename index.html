@@ -548,11 +548,6 @@
             <div class="stat-value" id="dash-customers">0</div>
             <div class="stat-sub" id="dash-customers-sub">registered</div>
         </div>
-        <div class="stat-card" style="grid-column:1/-1">
-            <div class="stat-label">This Month Net Profit</div>
-            <div class="stat-value" id="dash-net-profit" style="font-size:20px;">&#8377;0</div>
-            <div class="stat-sub" id="dash-net-profit-sub">collected - stock - expenses - chit fund</div>
-        </div>
     </div>
 
     <div class="card" id="dash-target-card">
@@ -1248,27 +1243,6 @@ function renderDashboard() {
     document.getElementById('dash-customers').textContent = customers.length;
     document.getElementById('dash-customers-sub').innerHTML =
         `<span style="color:var(--success)">${activeCount} active</span> &nbsp;&#183;&nbsp; <span style="color:var(--gray-500)">${inactiveCount} inactive</span>`;
-
-    // This month net profit
-    const monthCollected = monthRevenue
-        + monthSales.filter(s=>s.status==='partial').reduce((a,s)=>a+(s.amountPaid||0),0);
-    const monthStocks = stocks.filter(s => (s.billingMonth || (s.date||'').substring(0,7)) === month);
-    const monthStockCost = monthStocks.reduce((a,s)=>a+(s.totalCost||0),0);
-    const monthEx = expenses.find(x => x.month === month);
-    const monthExpenses = (monthEx?.rent||0) + (monthEx?.petrol||0) + (monthEx?.electricity||0) + (monthEx?.other||0);
-    const monthCF = chitfund.find(x => x.month === month && x.status === 'paid');
-    const monthChitFund = monthCF ? (monthCF.amount||0) : 0;
-    const netProfit = monthCollected - monthStockCost - monthExpenses - monthChitFund;
-    const profitEl = document.getElementById('dash-net-profit');
-    profitEl.innerHTML = (netProfit < 0 ? '&#8722; ' : '') + fmtINR(Math.abs(netProfit));
-    profitEl.style.color = netProfit >= 0 ? 'var(--success)' : 'var(--danger)';
-    const subParts = [];
-    if (monthStockCost) subParts.push('Stock: ' + fmtINR(monthStockCost));
-    if (monthExpenses) subParts.push('Exp: ' + fmtINR(monthExpenses));
-    if (monthChitFund) subParts.push('Chit: ' + fmtINR(monthChitFund));
-    document.getElementById('dash-net-profit-sub').innerHTML = subParts.length
-        ? subParts.join(' &nbsp;&#183;&nbsp; ')
-        : 'No expenses entered yet';
 
     // 1000 Bundles Monthly Target
     const TARGET = 1000;
@@ -2530,7 +2504,17 @@ function renderReports() {
                     <span class="rv" style="color:${netProfit>=0?'var(--success)':'var(--danger)'};font-size:16px;font-weight:800">
                         ${netProfit >= 0 ? '' : '&#8722; '}${fmtINR(Math.abs(netProfit))}
                     </span>
-                </div>`;
+                </div>
+                ${totalBundles > 0 ? (() => {
+                    const profitExChitFund = collectedTotal - totalStockCost - totalExpenses;
+                    const perBundle = Math.round(profitExChitFund / totalBundles);
+                    return `<div class="report-row" style="background:${perBundle>=0?'#f0fdf4':'#fff0f0'};border-radius:8px;padding:8px 10px;margin-top:6px;border:none">
+                        <span style="font-size:12px;font-weight:700;color:var(--gray-700)">&#128230; Profit per Bundle</span>
+                        <span class="rv" style="color:${perBundle>=0?'var(--success)':'var(--danger)'};font-size:15px;font-weight:800">
+                            ${perBundle >= 0 ? '' : '&#8722; '}${fmtINR(Math.abs(perBundle))}
+                        </span>
+                    </div>`;
+                })() : ''}`;
             })()}
         </div>`;
     }).join('');

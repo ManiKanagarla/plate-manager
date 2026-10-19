@@ -165,17 +165,30 @@ All 5 collections use onSnapshot — real-time sync across devices.
 ## App Sections
 
 ### 1. Home (Dashboard)
+
+Stat cards (top):
 - Today's bundles sold + amount
 - This month's bundles + collected amount
 - Total pending amount (pending + partial sales)
 - Total customers count (active / inactive breakdown)
-- 1000 Bundles Target card — progress bar, bundles sold vs 1000, days left to Dec 30, daily rate needed
-- Current stock status (latest stock):
-  - Total / Sold / Remaining bundles
-  - Per plate type breakdown: purchased vs sold vs remaining (colour coded green/amber/red)
-- Overdue Payments alert — auto-appears when any pending/partial sale is older than 15 days
-  - Groups by customer, shows total due and oldest sale age
-- Recent 5 sales
+
+Monthly Target card:
+- 1000 Bundles Monthly Target — resets every month
+- Progress bar: current month bundles sold vs 1000
+- Shows current month name, days left until end of month, bundles/day needed
+- Turns green with "Target achieved this month!" when 1000 is crossed
+
+Current Stock card:
+- Total / Sold / Remaining bundles
+- Per plate type breakdown: purchased vs sold vs remaining
+  - Green = healthy, Amber = ≤10 left, Red = 0 or negative
+
+Overdue Payments alert:
+- Auto-appears when any pending/partial sale is older than 15 days
+- Groups by customer, shows total due and oldest sale age
+- Auto-hides when no overdue sales
+
+Recent 5 sales
 
 ---
 
@@ -381,7 +394,7 @@ Total bundles = sum of all item bundles (used for stock tracking)
 - Profit/Loss auto-calculation in Reports (collected - stock cost - expenses - chit fund paid)
 - Overdue payment detection (>15 days) — red border + badge on sale cards + dashboard alert grouped by customer
 - Chit fund deducted in monthly profit/loss (only when marked paid)
-- 1000 Bundles Target tracker on dashboard — progress bar, days left to Dec 30, daily rate needed
+- Monthly 1000 Bundles Target tracker on dashboard — resets each month, progress bar, days left in month, daily rate needed
 - Current stock plate type breakdown on dashboard — per type: purchased / sold / remaining with colour coding
 - Stock multi-order format — multiple orders with plate type items per stock number
 
