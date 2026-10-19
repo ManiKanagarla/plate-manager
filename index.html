@@ -550,6 +550,26 @@
         </div>
     </div>
 
+    <div class="card" id="dash-target-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div>
+                <div style="font-size:13px;font-weight:700;color:var(--gray-900)">&#127919; 1000 Bundles Target</div>
+                <div style="font-size:11px;color:var(--gray-500);margin-top:2px" id="dash-target-deadline">by Dec 30, 2026</div>
+            </div>
+            <div style="text-align:right">
+                <div style="font-size:20px;font-weight:800;color:var(--primary)" id="dash-target-sold">0</div>
+                <div style="font-size:11px;color:var(--gray-500)">of 1000 sold</div>
+            </div>
+        </div>
+        <div style="background:var(--gray-100);border-radius:999px;height:10px;overflow:hidden;margin-bottom:10px">
+            <div id="dash-target-bar" style="height:100%;border-radius:999px;background:var(--gradient-primary);transition:width 0.5s ease;width:0%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--gray-500)" id="dash-target-meta">
+            <span id="dash-target-remaining"></span>
+            <span id="dash-target-rate"></span>
+        </div>
+    </div>
+
     <div class="card">
         <div class="section-header" style="margin-bottom:8px">
             <h2>Current Stock</h2>
@@ -1224,20 +1244,71 @@ function renderDashboard() {
     document.getElementById('dash-customers-sub').innerHTML =
         `<span style="color:var(--success)">${activeCount} active</span> &nbsp;&#183;&nbsp; <span style="color:var(--gray-500)">${inactiveCount} inactive</span>`;
 
+    // 1000 Bundles Target
+    const TARGET = 1000;
+    const DEADLINE = new Date('2026-12-30');
+    const totalSold = sales.reduce((a, s) => a + (s.bundles || 0), 0);
+    const remaining = Math.max(0, TARGET - totalSold);
+    const pct = Math.min(100, Math.round((totalSold / TARGET) * 100));
+    const daysLeft = Math.max(0, Math.floor((DEADLINE - new Date()) / 86400000));
+    const perDayNeeded = daysLeft > 0 ? (remaining / daysLeft).toFixed(1) : '—';
+    document.getElementById('dash-target-sold').textContent = totalSold;
+    document.getElementById('dash-target-bar').style.width = pct + '%';
+    document.getElementById('dash-target-bar').style.background = totalSold >= TARGET ? 'var(--success)' : 'var(--gradient-primary)';
+    if (totalSold >= TARGET) {
+        document.getElementById('dash-target-remaining').innerHTML = '<span style="color:var(--success);font-weight:700">&#10003; Target achieved!</span>';
+        document.getElementById('dash-target-rate').textContent = '';
+        document.getElementById('dash-target-deadline').textContent = 'Completed — Dec 30, 2026';
+    } else {
+        document.getElementById('dash-target-remaining').textContent = remaining + ' bundles remaining · ' + daysLeft + ' days left';
+        document.getElementById('dash-target-rate').textContent = perDayNeeded + ' bundles/day needed';
+    }
+
     // Current stock
     const stockEl = document.getElementById('dash-stock');
     if (stocks.length > 0) {
         const s = stocks[0];
-        const soldBundles = sales.filter(x=>x.stockNumber==s.stockNumber).reduce((a,x)=>a+(x.bundles||0),0);
-        const remaining = (s.bundles||0) - soldBundles;
+        const stockSales = sales.filter(x => x.stockNumber == s.stockNumber);
+        const soldBundles = stockSales.reduce((a, x) => a + (x.bundles || 0), 0);
+        const stockRemaining = (s.bundles || 0) - soldBundles;
+
+        // Purchased per plate type (from orders.items)
+        const purchasedByType = {};
+        (s.orders || []).forEach(o => (o.items || []).forEach(it => {
+            if (!it.plateKey) return;
+            purchasedByType[it.plateKey] = (purchasedByType[it.plateKey] || 0) + (it.bundles || 0);
+        }));
+
+        // Sold per plate type (from sales.items)
+        const soldByType = {};
+        stockSales.forEach(sale => (sale.items || []).forEach(it => {
+            if (!it.plateKey) return;
+            soldByType[it.plateKey] = (soldByType[it.plateKey] || 0) + (it.bundles || 0);
+        }));
+
+        // Build plate type breakdown rows (only types that were purchased)
+        const plateRows = PLATE_TYPES.filter(pt => purchasedByType[pt.key]).map(pt => {
+            const purchased = purchasedByType[pt.key] || 0;
+            const sold = soldByType[pt.key] || 0;
+            const left = purchased - sold;
+            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--gray-100);font-size:13px">
+                <span style="color:var(--gray-700);font-weight:500">${esc(pt.label)}</span>
+                <div style="display:flex;gap:14px;text-align:right">
+                    <span style="color:var(--gray-500);font-size:12px">${purchased} in &nbsp;&#183;&nbsp; ${sold} sold</span>
+                    <span style="font-weight:700;color:${left<=0?'var(--danger)':left<=10?'var(--warning)':'var(--success)'}">${left} left</span>
+                </div>
+            </div>`;
+        }).join('');
+
         stockEl.innerHTML = `
-            <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+            <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:${plateRows?'10px':'0'}">
                 <div><div style="font-size:11px;color:var(--gray-500)">Current</div><div style="font-size:20px;font-weight:800;color:var(--primary)">Stock ${s.stockNumber}</div></div>
                 <div><div style="font-size:11px;color:var(--gray-500)">Total</div><div style="font-size:16px;font-weight:700">${s.bundles} bundles</div></div>
                 <div><div style="font-size:11px;color:var(--gray-500)">Sold</div><div style="font-size:16px;font-weight:700;color:var(--warning)">${soldBundles}</div></div>
-                <div><div style="font-size:11px;color:var(--gray-500)">Left</div><div style="font-size:16px;font-weight:700;color:${remaining<0?'var(--danger)':'var(--success)'}">${remaining}</div></div>
+                <div><div style="font-size:11px;color:var(--gray-500)">Left</div><div style="font-size:16px;font-weight:700;color:${stockRemaining<0?'var(--danger)':'var(--success)'}">${stockRemaining}</div></div>
                 <div><div style="font-size:11px;color:var(--gray-500)">Source</div><div style="font-size:13px;font-weight:600">${s.source}</div></div>
-            </div>`;
+            </div>
+            ${plateRows ? `<div style="margin-top:4px">${plateRows}</div>` : ''}`;
     } else {
         stockEl.innerHTML = '<div style="color:var(--gray-500);font-size:13px;">No stock added yet. Go to Stock tab to add.</div>';
     }
