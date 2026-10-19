@@ -1,6 +1,6 @@
 # Manjunadha Disposable Hub — App Guide & Feature Reference
 
-> Last updated: September 2026
+> Last updated: October 2026
 > Use this document when adding new features — understand what exists first.
 
 ---
@@ -102,14 +102,13 @@ UI handles both — falls back to showing bundles count for legacy sales.
 ```
 id              auto by Firebase
 stockNumber     number  (1, 2, 3 ... sequential)
-date            string  YYYY-MM-DD (actual purchase date)
 billingMonth    string  YYYY-MM (which month this counts under in reports)
-source          string  (where stock came from e.g. Hyderabad)
-supplier        string  (supplier name, optional)
-bundles         number  (total bundles received)
-purchaseCost    number
-transportCost   number
-totalCost       number  (purchaseCost + transportCost, auto calculated)
+orders          array   (multi-order format — see below)
+bundles         number  (total bundles across all orders — auto calculated)
+purchaseCost    number  (total purchase cost — auto calculated)
+transportCost   number  (total transport cost — auto calculated)
+totalCost       number  (purchaseCost + transportCost — auto calculated)
+source          string  (comma-joined unique sources from orders)
 paymentMode     string  cash | phonepay | upi | bank
 paymentDate     string  YYYY-MM-DD
 returnBundles   number  (bundles returned to supplier, optional)
@@ -117,6 +116,18 @@ notes           string
 createdAt       ISO string
 updatedAt       ISO string
 ```
+
+Each order inside `orders` array:
+```
+date            string  YYYY-MM-DD (actual purchase date of this order)
+source          string  (e.g. Hyderabad)
+supplier        string  (optional)
+transportCost   number
+items           array   [ { plateKey, plateLabel, bundles, purchaseCost } ]
+```
+
+Note: Old stocks (before multi-order update) have flat fields (date, source, supplier, bundles, purchaseCost).
+UI handles both formats — old stocks auto-migrated to single-order display when editing.
 
 ---
 
@@ -144,9 +155,10 @@ let customers = [];   // live from Firestore onSnapshot
 let sales = [];       // ordered by date desc
 let stocks = [];      // ordered by stockNumber desc
 let expenses = [];    // ordered by month desc
+let chitfund = [];    // ordered by month desc
 ```
 
-All 4 collections use onSnapshot — real-time sync across devices.
+All 5 collections use onSnapshot — real-time sync across devices.
 
 ---
 
@@ -156,8 +168,13 @@ All 4 collections use onSnapshot — real-time sync across devices.
 - Today's bundles sold + amount
 - This month's bundles + collected amount
 - Total pending amount (pending + partial sales)
-- Total customers count
-- Current stock status (latest stock — remaining bundles)
+- Total customers count (active / inactive breakdown)
+- 1000 Bundles Target card — progress bar, bundles sold vs 1000, days left to Dec 30, daily rate needed
+- Current stock status (latest stock):
+  - Total / Sold / Remaining bundles
+  - Per plate type breakdown: purchased vs sold vs remaining (colour coded green/amber/red)
+- Overdue Payments alert — auto-appears when any pending/partial sale is older than 15 days
+  - Groups by customer, shows total due and oldest sale age
 - Recent 5 sales
 
 ---
@@ -200,6 +217,7 @@ Sale card shows:
 - Total bill amount
 - Balance Due in red (for pending and partial sales)
 - Status badge (Paid / Pending / Partial)
+- Overdue badge + red left border if sale is pending/partial and older than 15 days (e.g. "⚠ 20d overdue")
 
 Sale detail modal:
 - Full breakdown: each plate type -> bundles x rate = subtotal
@@ -229,10 +247,11 @@ Stock list:
 - Edit / Delete per stock
 
 Add/Edit Stock form:
-- Stock number, purchase date, billing month
-  (can differ — e.g. Jun 30 stock -> bill to July)
-- Source location, supplier name
-- Bundles received, purchase cost, transport cost -> total auto-calculates
+- Stock number, billing month
+- Multi-order support — add multiple orders under one stock number
+- Per order: date, source, supplier, transport cost
+- Per order items: plate type + bundles + purchase cost (one row per plate type)
+- Grand total auto-calculates across all orders and items
 - Payment mode, payment date
 - Return bundles (optional)
 
@@ -265,6 +284,19 @@ Monthly Expenses section:
 
 Savings section
 
+Profit / Loss section (auto-calculated, shows only if stock cost or expenses exist):
+```
+Collected - Stock Cost - Expenses - Chit Fund (paid) = Net Profit
+```
+- Net Profit shown in green (profit) or red (loss)
+- Chit fund deducted only if marked as paid for that month
+
+### 6. Chit Fund
+- Track monthly chit fund installment payments
+- Per month: amount, status (paid/pending), payment date, notes
+- Summary: total paid, total pending, months count
+- Edit / Delete per month entry
+
 ---
 
 ## Key Business Logic
@@ -272,8 +304,31 @@ Savings section
 ### Stock Tracking
 - bundles sold from stock X = sum of sale.bundles where sale.stockNumber === X
 - remaining = stock.bundles - soldBundles
+- Per plate type remaining = purchased (from stock.orders.items) - sold (from sales.items)
 - Stock numbers are sequential (1, 2, 3...) — up to 2 stocks per month
 - billingMonth controls which month a stock appears in reports
+
+### Overdue Detection
+- A sale is overdue if: status is pending or partial AND daysSince(sale.date) > 15
+- daysSince(dateStr) = Math.floor((now - saleDate) / 86400000)
+- Overdue sales show: red left border + "⚠ Xd overdue" badge on sale cards
+- Dashboard shows overdue alert section grouped by customer (auto-hides when none)
+
+### Profit/Loss Calculation (per month in Reports)
+```
+Net Profit = (collected + partialCollected)
+           - monthStocks.totalCost        (purchaseCost + transportCost)
+           - expenses (rent+petrol+electricity+other)
+           - chitfund.amount (only if status === 'paid' for that month)
+```
+
+### 1000 Bundles Monthly Target
+- Target: 1000 bundles every month (resets each month)
+- monthSoldBundles = sum of sales.bundles where sale.date starts with current YYYY-MM
+- remaining = 1000 - monthSoldBundles
+- daysLeft = days until last day of current month
+- perDayNeeded = remaining / daysLeft
+- Turns green and shows "Target achieved this month!" when monthSoldBundles >= 1000
 
 ### Pending Amount Calculation
 ```
@@ -304,6 +359,8 @@ Total bundles = sum of all item bundles (used for stock tracking)
 | XSS safety | esc() function used for all user data in HTML |
 | INR formatting | fmtINR(n) -> Rs.1,23,456 |
 | Date formatting | fmtDate('YYYY-MM-DD') -> DD/MM/YYYY |
+| Days since | daysSince(dateStr) -> number of days from date to today |
+| Overdue threshold | 15 days (change the `> 15` checks in renderDashboard + buildSaleCard) |
 
 ---
 
@@ -321,9 +378,12 @@ Total bundles = sum of all item bundles (used for stock tracking)
 
 ## Completed Features (Added Oct 2026)
 
-- Profit/Loss calculation in Reports (revenue - stock cost - expenses - chit fund)
-- Overdue payment detection (>30 days) — badge on sale cards + dashboard alert section
-- Chit fund included in monthly profit/loss deduction
+- Profit/Loss auto-calculation in Reports (collected - stock cost - expenses - chit fund paid)
+- Overdue payment detection (>15 days) — red border + badge on sale cards + dashboard alert grouped by customer
+- Chit fund deducted in monthly profit/loss (only when marked paid)
+- 1000 Bundles Target tracker on dashboard — progress bar, days left to Dec 30, daily rate needed
+- Current stock plate type breakdown on dashboard — per type: purchased / sold / remaining with colour coding
+- Stock multi-order format — multiple orders with plate type items per stock number
 
 ---
 
@@ -340,7 +400,7 @@ Total bundles = sum of all item bundles (used for stock tracking)
 - "Send Reminders" button on dashboard
 - Loops over all pending/overdue customers
 - Sends SMS via Fast2SMS API automatically
-- Two message types: normal reminder and urgent overdue (>30 days)
+- Two message types: normal reminder and urgent overdue (>15 days)
 - Language per customer: English or Telugu
 
 **Setup needed before building:**

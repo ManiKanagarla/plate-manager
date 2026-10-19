@@ -548,13 +548,18 @@
             <div class="stat-value" id="dash-customers">0</div>
             <div class="stat-sub" id="dash-customers-sub">registered</div>
         </div>
+        <div class="stat-card" style="grid-column:1/-1">
+            <div class="stat-label">This Month Net Profit</div>
+            <div class="stat-value" id="dash-net-profit" style="font-size:20px;">&#8377;0</div>
+            <div class="stat-sub" id="dash-net-profit-sub">collected - stock - expenses - chit fund</div>
+        </div>
     </div>
 
     <div class="card" id="dash-target-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
             <div>
-                <div style="font-size:13px;font-weight:700;color:var(--gray-900)">&#127919; 1000 Bundles Target</div>
-                <div style="font-size:11px;color:var(--gray-500);margin-top:2px" id="dash-target-deadline">by Dec 30, 2026</div>
+                <div style="font-size:13px;font-weight:700;color:var(--gray-900)">&#127919; Monthly Target — 1000 Bundles</div>
+                <div style="font-size:11px;color:var(--gray-500);margin-top:2px" id="dash-target-deadline"></div>
             </div>
             <div style="text-align:right">
                 <div style="font-size:20px;font-weight:800;color:var(--primary)" id="dash-target-sold">0</div>
@@ -1244,24 +1249,47 @@ function renderDashboard() {
     document.getElementById('dash-customers-sub').innerHTML =
         `<span style="color:var(--success)">${activeCount} active</span> &nbsp;&#183;&nbsp; <span style="color:var(--gray-500)">${inactiveCount} inactive</span>`;
 
-    // 1000 Bundles Target
+    // This month net profit
+    const monthCollected = monthRevenue
+        + monthSales.filter(s=>s.status==='partial').reduce((a,s)=>a+(s.amountPaid||0),0);
+    const monthStocks = stocks.filter(s => (s.billingMonth || (s.date||'').substring(0,7)) === month);
+    const monthStockCost = monthStocks.reduce((a,s)=>a+(s.totalCost||0),0);
+    const monthEx = expenses.find(x => x.month === month);
+    const monthExpenses = (monthEx?.rent||0) + (monthEx?.petrol||0) + (monthEx?.electricity||0) + (monthEx?.other||0);
+    const monthCF = chitfund.find(x => x.month === month && x.status === 'paid');
+    const monthChitFund = monthCF ? (monthCF.amount||0) : 0;
+    const netProfit = monthCollected - monthStockCost - monthExpenses - monthChitFund;
+    const profitEl = document.getElementById('dash-net-profit');
+    profitEl.innerHTML = (netProfit < 0 ? '&#8722; ' : '') + fmtINR(Math.abs(netProfit));
+    profitEl.style.color = netProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+    const subParts = [];
+    if (monthStockCost) subParts.push('Stock: ' + fmtINR(monthStockCost));
+    if (monthExpenses) subParts.push('Exp: ' + fmtINR(monthExpenses));
+    if (monthChitFund) subParts.push('Chit: ' + fmtINR(monthChitFund));
+    document.getElementById('dash-net-profit-sub').innerHTML = subParts.length
+        ? subParts.join(' &nbsp;&#183;&nbsp; ')
+        : 'No expenses entered yet';
+
+    // 1000 Bundles Monthly Target
     const TARGET = 1000;
-    const DEADLINE = new Date('2026-12-30');
-    const totalSold = sales.reduce((a, s) => a + (s.bundles || 0), 0);
-    const remaining = Math.max(0, TARGET - totalSold);
-    const pct = Math.min(100, Math.round((totalSold / TARGET) * 100));
-    const daysLeft = Math.max(0, Math.floor((DEADLINE - new Date()) / 86400000));
-    const perDayNeeded = daysLeft > 0 ? (remaining / daysLeft).toFixed(1) : '—';
-    document.getElementById('dash-target-sold').textContent = totalSold;
-    document.getElementById('dash-target-bar').style.width = pct + '%';
-    document.getElementById('dash-target-bar').style.background = totalSold >= TARGET ? 'var(--success)' : 'var(--gradient-primary)';
-    if (totalSold >= TARGET) {
-        document.getElementById('dash-target-remaining').innerHTML = '<span style="color:var(--success);font-weight:700">&#10003; Target achieved!</span>';
+    const now = new Date();
+    const monthSoldBundles = monthSales.reduce((a, s) => a + (s.bundles || 0), 0);
+    const targetRemaining = Math.max(0, TARGET - monthSoldBundles);
+    const targetPct = Math.min(100, Math.round((monthSoldBundles / TARGET) * 100));
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const targetDaysLeft = Math.max(0, Math.ceil((lastDay - now) / 86400000));
+    const targetPerDay = targetDaysLeft > 0 ? (targetRemaining / targetDaysLeft).toFixed(1) : '—';
+    const monthLabel = now.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+    document.getElementById('dash-target-sold').textContent = monthSoldBundles;
+    document.getElementById('dash-target-bar').style.width = targetPct + '%';
+    document.getElementById('dash-target-bar').style.background = monthSoldBundles >= TARGET ? 'var(--success)' : 'var(--gradient-primary)';
+    document.getElementById('dash-target-deadline').textContent = monthLabel;
+    if (monthSoldBundles >= TARGET) {
+        document.getElementById('dash-target-remaining').innerHTML = '<span style="color:var(--success);font-weight:700">&#10003; Target achieved this month!</span>';
         document.getElementById('dash-target-rate').textContent = '';
-        document.getElementById('dash-target-deadline').textContent = 'Completed — Dec 30, 2026';
     } else {
-        document.getElementById('dash-target-remaining').textContent = remaining + ' bundles remaining · ' + daysLeft + ' days left';
-        document.getElementById('dash-target-rate').textContent = perDayNeeded + ' bundles/day needed';
+        document.getElementById('dash-target-remaining').textContent = targetRemaining + ' more needed · ' + targetDaysLeft + ' days left';
+        document.getElementById('dash-target-rate').textContent = targetPerDay + ' bundles/day needed';
     }
 
     // Current stock
