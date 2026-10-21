@@ -469,6 +469,62 @@
         }
         .btn-logout:hover { background: rgba(255,255,255,0.26); }
 
+        /* CALCULATOR FAB */
+        .calc-fab {
+            position: fixed; bottom: 85px; right: 16px; z-index: 900;
+            width: 48px; height: 48px; border-radius: 50%;
+            background: var(--gradient-primary);
+            color: white; font-size: 20px;
+            border: none; cursor: pointer;
+            box-shadow: 0 4px 16px -4px rgba(79,70,229,0.6);
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.15s;
+        }
+        .calc-fab:active { transform: scale(0.92); }
+        @media (min-width: 560px) { .calc-fab { right: calc(50% - 264px); } }
+
+        /* CALCULATOR MODAL */
+        .calc-overlay {
+            display: none; position: fixed; inset: 0; z-index: 1100;
+            background: rgba(0,0,0,0.45);
+            align-items: flex-end; justify-content: center;
+        }
+        .calc-sheet {
+            background: #1c1c1e; border-radius: 24px 24px 0 0;
+            width: 100%; max-width: 560px;
+            padding: 16px 16px 32px;
+        }
+        .calc-handle {
+            width: 36px; height: 4px; background: rgba(255,255,255,0.2);
+            border-radius: 2px; margin: 0 auto 16px;
+        }
+        .calc-display-area {
+            text-align: right; padding: 8px 12px 20px; min-height: 80px;
+            display: flex; flex-direction: column; justify-content: flex-end;
+        }
+        .calc-expr { font-size: 14px; color: rgba(255,255,255,0.4); min-height: 20px; margin-bottom: 4px; }
+        .calc-result {
+            font-size: 48px; font-weight: 300; color: white;
+            line-height: 1; word-break: break-all;
+            transition: font-size 0.1s;
+        }
+        .calc-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+        }
+        .calc-btn {
+            height: 72px; border-radius: 50%; border: none; cursor: pointer;
+            font-size: 22px; font-weight: 400; font-family: inherit;
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.1s;
+        }
+        .calc-btn:active { opacity: 0.7; }
+        .calc-btn.func { background: #a5a5a5; color: #1c1c1e; font-weight: 600; font-size: 18px; }
+        .calc-btn.op   { background: #ff9f0a; color: white; }
+        .calc-btn.op.active-op { background: white; color: #ff9f0a; }
+        .calc-btn.num  { background: #333335; color: white; }
+        .calc-btn.zero { border-radius: 36px; justify-content: flex-start; padding-left: 26px; }
+        .calc-btn.eq   { background: #ff9f0a; color: white; }
+
         /* PLATE RATES */
         .plate-rates-grid { display:flex; flex-direction:column; gap:6px; margin-top:4px; }
         .plate-rate-row { display:flex; align-items:center; gap:10px; }
@@ -738,6 +794,45 @@
         <span class="nav-icon">&#128202;</span><span class="nav-label">Reports</span>
     </button>
 </nav>
+
+<!-- CALCULATOR FAB -->
+<button class="calc-fab" onclick="openCalc()" title="Calculator">&#8981;</button>
+
+<!-- CALCULATOR MODAL -->
+<div class="calc-overlay" id="calc-modal" onclick="if(event.target===this)closeCalc()">
+    <div class="calc-sheet">
+        <div class="calc-handle"></div>
+        <div class="calc-display-area">
+            <div class="calc-expr" id="calc-expr"></div>
+            <div class="calc-result" id="calc-display">0</div>
+        </div>
+        <div class="calc-grid">
+            <button class="calc-btn func" onclick="calcInput('AC')" id="calc-ac">AC</button>
+            <button class="calc-btn func" onclick="calcInput('+/-')">+/-</button>
+            <button class="calc-btn func" onclick="calcInput('%')">%</button>
+            <button class="calc-btn op"   onclick="calcInput('÷')" id="calc-op-div">÷</button>
+
+            <button class="calc-btn num"  onclick="calcInput('7')">7</button>
+            <button class="calc-btn num"  onclick="calcInput('8')">8</button>
+            <button class="calc-btn num"  onclick="calcInput('9')">9</button>
+            <button class="calc-btn op"   onclick="calcInput('×')" id="calc-op-mul">×</button>
+
+            <button class="calc-btn num"  onclick="calcInput('4')">4</button>
+            <button class="calc-btn num"  onclick="calcInput('5')">5</button>
+            <button class="calc-btn num"  onclick="calcInput('6')">6</button>
+            <button class="calc-btn op"   onclick="calcInput('-')" id="calc-op-sub">−</button>
+
+            <button class="calc-btn num"  onclick="calcInput('1')">1</button>
+            <button class="calc-btn num"  onclick="calcInput('2')">2</button>
+            <button class="calc-btn num"  onclick="calcInput('3')">3</button>
+            <button class="calc-btn op"   onclick="calcInput('+')" id="calc-op-add">+</button>
+
+            <button class="calc-btn num zero" style="grid-column:span 2" onclick="calcInput('0')">0</button>
+            <button class="calc-btn num"  onclick="calcInput('.')">.</button>
+            <button class="calc-btn eq"   onclick="calcInput('=')">=</button>
+        </div>
+    </div>
+</div>
 
 <!-- MODAL: ADD/EDIT CUSTOMER -->
 <div class="modal-overlay" id="modal-customer">
@@ -2491,13 +2586,28 @@ function renderReports() {
                 const cf = chitfund.find(x => x.month === m && x.status === 'paid');
                 const chitFundAmt = cf ? (cf.amount||0) : 0;
                 const collectedTotal = collected + partialCollected;
-                const netProfit = collectedTotal - totalStockCost - totalExpenses - chitFundAmt;
                 if (totalStockCost === 0 && totalExpenses === 0 && chitFundAmt === 0) return '';
+
+                const businessProfit = collectedTotal - totalStockCost - totalExpenses;
+                const netProfit = businessProfit - chitFundAmt;
+
+                const projBusinessProfit = totalAmt - totalStockCost - totalExpenses;
+                const projNetProfit = projBusinessProfit - chitFundAmt;
+                const projPerBundle = totalBundles > 0 ? Math.round(projBusinessProfit / totalBundles) : null;
+
+                const hasPending = pending > 0;
+
                 return `
-                <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.4px;margin:10px 0 6px;border-top:2px solid var(--gray-200);padding-top:10px">Profit / Loss</div>
+                <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.4px;margin:10px 0 6px;border-top:2px solid var(--gray-200);padding-top:10px">Profit / Loss — Actual</div>
                 <div class="report-row"><span>Collected</span><span class="rv" style="color:var(--success)">${fmtINR(collectedTotal)}</span></div>
                 ${totalStockCost ? `<div class="report-row"><span style="color:var(--gray-500)">&#8722; Stock Cost</span><span class="rv" style="color:var(--warning)">&#8722; ${fmtINR(totalStockCost)}</span></div>` : ''}
                 ${totalExpenses ? `<div class="report-row"><span style="color:var(--gray-500)">&#8722; Expenses</span><span class="rv" style="color:var(--warning)">&#8722; ${fmtINR(totalExpenses)}</span></div>` : ''}
+                <div class="report-row" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--gray-200)">
+                    <span><b>Business Profit</b></span>
+                    <span class="rv" style="color:${businessProfit>=0?'var(--success)':'var(--danger)'};font-size:15px;font-weight:800">
+                        ${businessProfit >= 0 ? '' : '&#8722; '}${fmtINR(Math.abs(businessProfit))}
+                    </span>
+                </div>
                 ${chitFundAmt ? `<div class="report-row"><span style="color:var(--gray-500)">&#8722; Chit Fund</span><span class="rv" style="color:var(--warning)">&#8722; ${fmtINR(chitFundAmt)}</span></div>` : ''}
                 <div class="report-row" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--gray-200)">
                     <span><b>Net Profit</b></span>
@@ -2505,16 +2615,39 @@ function renderReports() {
                         ${netProfit >= 0 ? '' : '&#8722; '}${fmtINR(Math.abs(netProfit))}
                     </span>
                 </div>
-                ${totalBundles > 0 ? (() => {
-                    const profitExChitFund = collectedTotal - totalStockCost - totalExpenses;
-                    const perBundle = Math.round(profitExChitFund / totalBundles);
-                    return `<div class="report-row" style="background:${perBundle>=0?'#f0fdf4':'#fff0f0'};border-radius:8px;padding:8px 10px;margin-top:6px;border:none">
-                        <span style="font-size:12px;font-weight:700;color:var(--gray-700)">&#128230; Profit per Bundle</span>
-                        <span class="rv" style="color:${perBundle>=0?'var(--success)':'var(--danger)'};font-size:15px;font-weight:800">
-                            ${perBundle >= 0 ? '' : '&#8722; '}${fmtINR(Math.abs(perBundle))}
-                        </span>
-                    </div>`;
-                })() : ''}`;
+                ${!hasPending && projPerBundle !== null ? `<div class="report-row" style="background:${projPerBundle>=0?'#f0fdf4':'#fff0f0'};border-radius:8px;padding:8px 10px;margin-top:6px;border:none">
+                    <span style="font-size:12px;font-weight:700;color:var(--gray-700)">&#128230; Profit per Bundle</span>
+                    <span class="rv" style="color:${projPerBundle>=0?'var(--success)':'var(--danger)'};font-size:15px;font-weight:800">
+                        ${projPerBundle >= 0 ? '' : '&#8722; '}${fmtINR(Math.abs(projPerBundle))}
+                    </span>
+                </div>` : ''}
+                ${hasPending ? `
+                <div style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.4px;margin:10px 0 6px;border-top:2px solid var(--gray-200);padding-top:10px">Profit / Loss — If Fully Collected</div>
+                <div class="report-row"><span>Total Revenue</span><span class="rv" style="color:var(--success)">${fmtINR(totalAmt)}</span></div>
+                <div class="report-row" style="padding-left:10px"><span style="color:var(--gray-500)">&#8627; Collected</span><span class="rv">${fmtINR(collectedTotal)}</span></div>
+                <div class="report-row" style="padding-left:10px"><span style="color:var(--danger)">&#8627; Pending</span><span class="rv" style="color:var(--danger)">${fmtINR(pending)}</span></div>
+                ${totalStockCost ? `<div class="report-row"><span style="color:var(--gray-500)">&#8722; Stock Cost</span><span class="rv" style="color:var(--warning)">&#8722; ${fmtINR(totalStockCost)}</span></div>` : ''}
+                ${totalExpenses ? `<div class="report-row"><span style="color:var(--gray-500)">&#8722; Expenses</span><span class="rv" style="color:var(--warning)">&#8722; ${fmtINR(totalExpenses)}</span></div>` : ''}
+                <div class="report-row" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--gray-200)">
+                    <span><b>Business Profit</b></span>
+                    <span class="rv" style="color:${projBusinessProfit>=0?'var(--success)':'var(--danger)'};font-size:15px;font-weight:800">
+                        ${projBusinessProfit >= 0 ? '' : '&#8722; '}${fmtINR(Math.abs(projBusinessProfit))}
+                    </span>
+                </div>
+                ${chitFundAmt ? `<div class="report-row"><span style="color:var(--gray-500)">&#8722; Chit Fund</span><span class="rv" style="color:var(--warning)">&#8722; ${fmtINR(chitFundAmt)}</span></div>` : ''}
+                <div class="report-row" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--gray-200)">
+                    <span><b>Net Profit</b></span>
+                    <span class="rv" style="color:${projNetProfit>=0?'var(--success)':'var(--danger)'};font-size:16px;font-weight:800">
+                        ${projNetProfit >= 0 ? '' : '&#8722; '}${fmtINR(Math.abs(projNetProfit))}
+                    </span>
+                </div>
+                ${projPerBundle !== null ? `<div class="report-row" style="background:${projPerBundle>=0?'#f0fdf4':'#fff0f0'};border-radius:8px;padding:8px 10px;margin-top:6px;border:none">
+                    <span style="font-size:12px;font-weight:700;color:var(--gray-700)">&#128230; Profit per Bundle</span>
+                    <span class="rv" style="color:${projPerBundle>=0?'var(--success)':'var(--danger)'};font-size:15px;font-weight:800">
+                        ${projPerBundle >= 0 ? '' : '&#8722; '}${fmtINR(Math.abs(projPerBundle))}
+                    </span>
+                </div>` : ''}
+                ` : ''}`;
             })()}
         </div>`;
     }).join('');
@@ -2769,6 +2902,73 @@ function doLogin() {
         document.getElementById('login-password').focus();
     }
 }
+
+// ── CALCULATOR ──────────────────────────────────────────
+let _cDisp = '0', _cPrev = null, _cOp = null, _cNew = true, _cJustEq = false;
+
+function openCalc() { document.getElementById('calc-modal').style.display = 'flex'; _renderCalc(); }
+function closeCalc() { document.getElementById('calc-modal').style.display = 'none'; }
+
+function calcInput(v) {
+    const ops = ['÷','×','-','+'];
+    if (v === 'AC') {
+        _cDisp = '0'; _cPrev = null; _cOp = null; _cNew = true; _cJustEq = false;
+    } else if (v === '+/-') {
+        _cDisp = String(-parseFloat(_cDisp) || 0);
+    } else if (v === '%') {
+        _cDisp = String(parseFloat(_cDisp) / 100);
+    } else if (ops.includes(v)) {
+        if (_cOp && !_cNew && !_cJustEq) _calcExecute();
+        _cPrev = parseFloat(_cDisp);
+        _cOp = v; _cNew = true; _cJustEq = false;
+    } else if (v === '=') {
+        if (_cOp && _cPrev !== null) { _calcExecute(); _cOp = null; _cJustEq = true; }
+    } else if (v === '.') {
+        if (_cNew) { _cDisp = '0.'; _cNew = false; _cJustEq = false; }
+        else if (!_cDisp.includes('.')) _cDisp += '.';
+    } else {
+        if (_cNew || _cJustEq) { _cDisp = v; _cNew = false; _cJustEq = false; }
+        else _cDisp = _cDisp === '0' ? v : _cDisp.length < 15 ? _cDisp + v : _cDisp;
+    }
+    _renderCalc();
+}
+
+function _calcExecute() {
+    const cur = parseFloat(_cDisp);
+    let r;
+    if (_cOp === '+') r = _cPrev + cur;
+    else if (_cOp === '-') r = _cPrev - cur;
+    else if (_cOp === '×') r = _cPrev * cur;
+    else if (_cOp === '÷') r = cur !== 0 ? _cPrev / cur : 'Error';
+    _cDisp = typeof r === 'number' ? String(parseFloat(r.toFixed(10))) : r;
+    _cPrev = parseFloat(_cDisp);
+}
+
+function _renderCalc() {
+    const disp = document.getElementById('calc-display');
+    const expr = document.getElementById('calc-expr');
+    const ac   = document.getElementById('calc-ac');
+    if (!disp) return;
+    // display value
+    const num = parseFloat(_cDisp);
+    if (!isNaN(num) && !_cDisp.includes('.') && _cDisp !== 'Error') {
+        disp.textContent = num.toLocaleString('en-IN');
+    } else { disp.textContent = _cDisp; }
+    // font size
+    const len = _cDisp.length;
+    disp.style.fontSize = len > 12 ? '28px' : len > 9 ? '36px' : len > 6 ? '42px' : '48px';
+    // expression line
+    if (expr) expr.textContent = (_cOp && _cPrev !== null) ? `${_cPrev.toLocaleString('en-IN')} ${_cOp}` : '';
+    // AC vs C
+    if (ac) ac.textContent = (_cDisp !== '0' || _cPrev !== null) ? 'C' : 'AC';
+    // highlight active op
+    ['÷','×','-','+'].forEach(op => {
+        const ids = {'÷':'calc-op-div','×':'calc-op-mul','-':'calc-op-sub','+':'calc-op-add'};
+        const el = document.getElementById(ids[op]);
+        if (el) el.classList.toggle('active-op', _cOp === op && _cNew);
+    });
+}
+// ── END CALCULATOR ───────────────────────────────────────
 
 function doLogout() {
     sessionStorage.removeItem('pp_auth');
