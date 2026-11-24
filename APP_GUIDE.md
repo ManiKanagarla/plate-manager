@@ -328,12 +328,26 @@ Collected - Stock Cost - Expenses - Chit Fund (paid) = Net Profit
 - Dashboard shows overdue alert section grouped by customer (auto-hides when none)
 
 ### Profit/Loss Calculation (per month in Reports)
+
+**Profit / Loss — Actual** (always shown):
 ```
-Net Profit = (collected + partialCollected)
-           - monthStocks.totalCost        (purchaseCost + transportCost)
-           - expenses (rent+petrol+electricity+other)
-           - chitfund.amount (only if status === 'paid' for that month)
+Business Profit = Collected - Stock Cost - Expenses
+Net Profit      = Business Profit - Chit Fund (only if status === 'paid' that month)
 ```
+
+**Profit / Loss — If Fully Collected** (only shown if pending > 0 that month):
+```
+Projected Business Profit = Total Revenue - Stock Cost - Expenses
+Projected Net Profit      = Projected Business Profit - Chit Fund
+```
+
+**Profit per Bundle** (single figure, always based on total revenue):
+```
+Profit per Bundle = (Total Revenue - Stock Cost - Expenses) / Bundles Sold
+```
+- Shows under Actual section when no pending
+- Shows under "If Fully Collected" section when pending exists
+- Chit Fund is NOT deducted from profit per bundle (it's a separate commitment, not a business cost)
 
 ### 1000 Bundles Monthly Target
 - Target: 1000 bundles every month (resets each month)
@@ -374,6 +388,7 @@ Total bundles = sum of all item bundles (used for stock tracking)
 | Date formatting | fmtDate('YYYY-MM-DD') -> DD/MM/YYYY |
 | Days since | daysSince(dateStr) -> number of days from date to today |
 | Overdue threshold | 15 days (change the `> 15` checks in renderDashboard + buildSaleCard) |
+| Calculator | Floating button bottom-right — openCalc() / closeCalc() — state in _cDisp, _cPrev, _cOp, _cNew |
 
 ---
 
@@ -391,12 +406,16 @@ Total bundles = sum of all item bundles (used for stock tracking)
 
 ## Completed Features (Added Oct 2026)
 
-- Profit/Loss auto-calculation in Reports (collected - stock cost - expenses - chit fund paid)
+- Profit/Loss auto-calculation in Reports — split into Actual and "If Fully Collected" (projected) sections
+- Business Profit row added (Collected - Stock Cost - Expenses, excludes Chit Fund)
+- Net Profit = Business Profit - Chit Fund (only when marked paid)
+- Profit per Bundle always based on Total Revenue (not just collected) — true per-bundle earning
 - Overdue payment detection (>15 days) — red border + badge on sale cards + dashboard alert grouped by customer
-- Chit fund deducted in monthly profit/loss (only when marked paid)
+- Chit fund deducted in monthly net profit (only when marked paid)
 - Monthly 1000 Bundles Target tracker on dashboard — resets each month, progress bar, days left in month, daily rate needed
 - Current stock plate type breakdown on dashboard — per type: purchased / sold / remaining with colour coding
 - Stock multi-order format — multiple orders with plate type items per stock number
+- Floating calculator button (bottom-right, above nav) — opens phone-style calculator popup from any screen
 
 ---
 
